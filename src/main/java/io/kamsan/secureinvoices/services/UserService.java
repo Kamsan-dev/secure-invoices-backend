@@ -6,5 +6,6 @@ import io.kamsan.secureinvoices.entities.User;
 public interface UserService {
 	
 	UserDTO createUser(User user);
+	UserDTO getUserByEmail(String email);
 
 }

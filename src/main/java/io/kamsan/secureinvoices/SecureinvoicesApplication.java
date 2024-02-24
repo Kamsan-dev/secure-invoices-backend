@@ -19,5 +19,4 @@ public class SecureinvoicesApplication {
 	public BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder(STRENGTH);
 	}
-
 }

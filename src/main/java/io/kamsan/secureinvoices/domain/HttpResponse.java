@@ -1,4 +1,4 @@
-package io.kamsan.secureinvoices.entities;
+package io.kamsan.secureinvoices.domain;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
