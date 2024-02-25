@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService{
-	
+public class UserServiceImpl implements UserService {
+
 	private final UserRepository<User> userRepository;
 
 	@Override
@@ -25,4 +25,20 @@ public class UserServiceImpl implements UserService{
 		return UserDTOMapper.fromUser(userRepository.getUserByEmail(email));
 	}
 
+	@Override
+	public void sendVerificationCode(UserDTO userDTO) {
+		User user = UserDTOMapper.fromUserDTO(userDTO);
+		userRepository.sendVerificationCode(user);
+
+	}
+
+	@Override
+	public User getUser(String email) {
+		return UserDTOMapper.fromUserDTO(this.getUserByEmail(email));
+	}
+
+	@Override
+	public UserDTO verifyCode(String email, String code) {
+		return UserDTOMapper.fromUser(userRepository.verifyCode(email, code)); 
+	}
 }

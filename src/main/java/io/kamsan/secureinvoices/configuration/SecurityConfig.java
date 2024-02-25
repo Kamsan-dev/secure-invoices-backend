@@ -10,6 +10,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private final String[] PUBLIC_URLS = {"/user/register/**", "/user/login/**"};
+	private final String[] PUBLIC_URLS = {"/user/register/**", "/user/login/**", "/user/verify/code/**"};
 	private final CustomeAccessDeniedHandler customeAccessDeniedHandler;
 	private final CustomeAuthenticationEntryPoint customeAuthenticationEntryPoint;
 	private final UserDetailsService userDetailsService;
@@ -55,5 +56,15 @@ public class SecurityConfig {
 		daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
 		daoAuthenticationProvider.setUserDetailsService(userDetailsService);
 		return new ProviderManager(daoAuthenticationProvider);
+	}
+	
+	@Bean
+	public WebSecurityCustomizer webSecurityCustomizer() {
+	    return (web) -> web.ignoring()
+	                       .requestMatchers("/v3/api-docs/**")
+	                       .requestMatchers("configuration/**") 
+	                       .requestMatchers("/swagger*/**")
+	                       .requestMatchers("/webjars/**")
+	                       .requestMatchers("/swagger-ui/**");
 	}
 }

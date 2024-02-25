@@ -2,15 +2,18 @@ package io.kamsan.secureinvoices.repositories.implementation;
 
 import static io.kamsan.secureinvoices.enums.RoleType.ROLE_USER;
 import static io.kamsan.secureinvoices.enums.VerificationType.ACCOUNT;
-import static io.kamsan.secureinvoices.query.RoleQuery.INSERT_ROLE_TO_USER_QUERY;
-import static io.kamsan.secureinvoices.query.RoleQuery.SELECT_ROLE_BY_NAME_QUERY;
 import static io.kamsan.secureinvoices.query.UserQuery.*;
 
+import static org.apache.commons.lang3.time.DateUtils.addDays;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -25,12 +28,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
+import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
-import io.kamsan.secureinvoices.rowmapper.RoleRowMapper;
 import io.kamsan.secureinvoices.rowmapper.UserRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +46,8 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	private final NamedParameterJdbcTemplate jdbc;
 	private final RoleRepository<Role> roleRepository;
 	private final BCryptPasswordEncoder encoder;
+	/* Default SQL format date */
+	private final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
 
 	@Override
 	public User create(User user) {
@@ -122,6 +127,44 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("No user found by email : " + email);
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside getUserByEmail, please try again ");
+		}
+	}
+	
+
+	@Override
+	public void sendVerificationCode(User user) {
+		
+		String expirationDate = DateFormatUtils.format(addDays(new Date(), 1), DATE_FORMAT);
+		String verificationCode = randomAlphabetic(8).toUpperCase();
+		try {
+			jdbc.update(DELETE_VERIFICATION_CODE_BY_USERID_QUERY, Map.of("userId", user.getUserId()));
+			jdbc.update(INSERT_VERIFICATION_CODE_QUERY, 
+					Map.of("userId", user.getUserId(), "code", verificationCode, "expirationDate", expirationDate));
+			log.info("Verification code : {}", verificationCode);
+			//sendSMS(user.getPhone(), "From: SecureInvoices \nVerification code : \n" + verificationCode);
+		} catch (Exception exception) {
+			throw new ApiException("An error occured inside sendVerificationCode, please try again ");
+		}
+		
+	}
+
+	@Override
+	public User verifyCode(String email, String code) {
+		try {
+			User userByEmail = this.getUserByEmail(email);
+			User userByCode = jdbc.queryForObject(SELECT_USER_BY_CODE_USER_QUERY, Map.of("code", code), new UserRowMapper());
+			
+			if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
+				// code verified. Has to be deleted next.
+				jdbc.update(DELETE_VERIFICATION_CODE_BY_USERID_QUERY, Map.of("userId", userByCode.getUserId()));
+				return userByCode;
+			} else {
+				throw new ApiException("Code is invalid. Please try again");
+			}
+		} catch (EmptyResultDataAccessException exception) {
+			throw new ApiException("No user found by code : " + code);
+		} catch (Exception exception) {
+			throw new ApiException("An error occured inside verifyCode, please try again ");
 		}
 	}
 	

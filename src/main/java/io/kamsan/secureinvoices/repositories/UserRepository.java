@@ -2,6 +2,7 @@ package io.kamsan.secureinvoices.repositories;
 
 import java.util.Collection;
 
+import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.User;
 
 public interface UserRepository<T extends User> {
@@ -15,6 +16,9 @@ public interface UserRepository<T extends User> {
 	T getUserByEmail(String email);
 	
 	/* More Complex Operations */
+	
+	void sendVerificationCode(User user);
+	T verifyCode(String email, String code);
 	
 
 }
