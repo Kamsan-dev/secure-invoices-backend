@@ -25,10 +25,14 @@ import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
+import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.LoginForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
+import io.kamsan.secureinvoices.utils.ExceptionUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,18 +47,23 @@ public class UserController {
 	private final RoleService roleService;
 	private final AuthenticationManager authenticationManager;
 	private final TokenProvider tokenProvider;
+	private final HttpServletRequest request;
+	private final HttpServletResponse response;
 
 	@PostMapping("/login")
 	public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
-		log.info("tentative de connexion avec email {} et mot de passe {}", loginForm.getEmail(),
-				loginForm.getPassword());
-		authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(), loginForm.getPassword()));
-		UserDTO userDTO = userService.getUserByEmail(loginForm.getEmail());
+		Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
+		UserDTO userAuthenticated = getAuthenticatedUser(authentication);
 		/* check if user is using MFA to return the right response */
-		return (userDTO.isUsingMfa()) ? sendVerificationCode(userDTO) : sendResponse(userDTO);
+		return (userAuthenticated.isUsingMfa()) 
+				? sendVerificationCode(userAuthenticated) : sendResponse(userAuthenticated);
 		
 	}
+	
+	private UserDTO getAuthenticatedUser (Authentication authentication) {
+		return ((CustomeUser) authentication.getPrincipal()).getUser();
+	}
+
 
 	@PostMapping("/register")
 	public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user) {
@@ -75,7 +84,7 @@ public class UserController {
 	public ResponseEntity<HttpResponse> profile(Authentication authentication) {
 		UserDTO userDTO = userService.getUserByEmail(authentication.getName());
 		return ResponseEntity
-				.created(getURI())
+				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userDTO))
@@ -83,6 +92,20 @@ public class UserController {
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());
+	}
+
+	/* handle white label error */
+	@RequestMapping("/error")
+	public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {
+		return ResponseEntity.badRequest().body(
+				HttpResponse.builder()
+					.timeStamp(now().toString())
+					.reason("There is no mapping for a " + request.getMethod() + " request for this path on the server")
+					.path(request.getRequestURI())
+					.status(HttpStatus.NOT_FOUND)
+					.statusCode(HttpStatus.NOT_FOUND.value())
+					.build()
+		);
 	}
 	
 	@GetMapping("/verify/code/{email}/{code}")
@@ -129,5 +152,17 @@ public class UserController {
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());
+	}
+	
+	/* authentication allows access to the authenticated user */
+	private Authentication authenticate(String email, String password) {
+		try {
+			Authentication authentication = authenticationManager
+					.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+			return authentication;
+		} catch (Exception exception) {
+			ExceptionUtils.processError(request, response, exception);
+			throw new ApiException(exception.getMessage());
+		}
 	}
 }

@@ -3,7 +3,7 @@ package io.kamsan.secureinvoices.provider;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
-
+import io.kamsan.secureinvoices.dtos.UserDTO;
 import java.util.Date;
 import java.util.List;
 
@@ -23,21 +23,25 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
+import io.kamsan.secureinvoices.services.UserService;
 import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 
 
 @Component
+@RequiredArgsConstructor
 public class TokenProvider {
 	
-	private final String SECUREINVOICES = "SecureInvoices";
-	private final String CUSTOMER_MANAGEMENT_SERVICES = "CUSTOMER_MANAGEMENT_SERVICES";
-	private final String AUTHORITIES = "authorities";
+	private static final String SECUREINVOICES = "SecureInvoices";
+	private static final String CUSTOMER_MANAGEMENT_SERVICES = "CUSTOMER_MANAGEMENT_SERVICES";
+	private static final String AUTHORITIES = "authorities";
 	// 30 min expiration
-	private final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
+	private static final long ACCESS_TOKEN_EXPIRATION_TIME = 100;
 	// 5 days expiration
-	private final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
+	private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
+	private final UserService userService;
 	
 	@Value("${jwt.secret}")
 	private String secret;
@@ -71,23 +75,22 @@ public class TokenProvider {
 	
 	public String getSubject (String token, HttpServletRequest request) {
 		try {
-			return getJWTVerifier().verify(token).getSubject();
-			
+			return String.valueOf(getJWTVerifier().verify(token).getSubject());
 		} catch (TokenExpiredException exception) {
 			request.setAttribute("expiredMessage", exception.getMessage());
-			
+			throw exception;
 		} catch (InvalidClaimException exception) {
 			request.setAttribute("invalidClaim", exception.getMessage());
+			throw exception;
 		} catch (Exception exception) {
 			throw exception;
 		}
-		
-		return null;
 	}
 	
 	public Authentication getAuthentication(String email, 
 			List<GrantedAuthority> authorities, HttpServletRequest request) {
-		UsernamePasswordAuthenticationToken userPasswordAuthToken = new UsernamePasswordAuthenticationToken(email, null, authorities);
+		UserDTO user = userService.getUserByEmail(email);
+		UsernamePasswordAuthenticationToken userPasswordAuthToken = new UsernamePasswordAuthenticationToken(user, null, authorities);
 		userPasswordAuthToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 		return userPasswordAuthToken;
 	}
@@ -100,9 +103,8 @@ public class TokenProvider {
 	private boolean isTokenExpired(JWTVerifier verifier, String token) {
 		Date expiration = verifier.verify(token).getExpiresAt();
 		// Check if expiration date of token is before today : true of false
-		return expiration.before(new Date());
+		return (expiration.before(new Date()));
 	}
-
 	private String[] getClaimsFromUser(CustomeUser customeUser) {
 		return customeUser.getAuthorities()
 				.stream()

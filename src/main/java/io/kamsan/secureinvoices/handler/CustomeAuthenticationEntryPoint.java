@@ -42,5 +42,4 @@ public class CustomeAuthenticationEntryPoint implements AuthenticationEntryPoint
 		out.flush();
 		
 	}
-
 }

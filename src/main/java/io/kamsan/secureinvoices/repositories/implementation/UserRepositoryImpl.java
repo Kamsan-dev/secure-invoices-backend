@@ -124,7 +124,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			User user = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, Map.of("email", email), new UserRowMapper());
 			return user;
 		} catch (EmptyResultDataAccessException exception) {
-			throw new ApiException("No user found by email : " + email);
+			throw new ApiException("Email cannot be empty or email has not been found");
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside getUserByEmail, please try again ");
 		}

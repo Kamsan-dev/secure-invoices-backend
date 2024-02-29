@@ -23,5 +23,6 @@ public class HttpResponse {
 	protected String message;
 	protected String developerMessage;
 	protected Map<?,?> data;
+	protected String path;
 
 }

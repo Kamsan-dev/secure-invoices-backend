@@ -1,5 +1,6 @@
 package io.kamsan.secureinvoices.filter;
 
+import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
@@ -14,13 +15,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.kamsan.secureinvoices.provider.TokenProvider;
+import io.kamsan.secureinvoices.utils.ExceptionUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import static java.util.Arrays.asList;
 
 @Component
 @RequiredArgsConstructor
@@ -54,7 +55,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 			filter.doFilter(request, response);
 		} catch (Exception exception) {
 			log.error(exception.getMessage());
-			//processError(request, response, exception);
+			ExceptionUtils.processError(request, response, exception);
 		}
 	}
 	

@@ -10,6 +10,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
+import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import lombok.RequiredArgsConstructor;
@@ -52,5 +54,9 @@ public class CustomeUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+    
+    public UserDTO getUser() {
+    	return UserDTOMapper.fromUser(this.user, this.role);
     }
 }
