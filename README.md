@@ -1,4 +1,4 @@
-# Spotify
+# SecureInvoices
 
 Web application to manage customers and invoices.
 In progress.
