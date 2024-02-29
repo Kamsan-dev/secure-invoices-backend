@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
+import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
@@ -69,6 +71,20 @@ public class UserController {
 				.build());
 	}
 	
+	@GetMapping("/profile")
+	public ResponseEntity<HttpResponse> profile(Authentication authentication) {
+		UserDTO userDTO = userService.getUserByEmail(authentication.getName());
+		return ResponseEntity
+				.created(getURI())
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", userDTO))
+				.message("Profile retrieved")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
 	@GetMapping("/verify/code/{email}/{code}")
 	public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
 		UserDTO userDTO = userService.verifyCode(email, code);
@@ -99,7 +115,7 @@ public class UserController {
 	/* method used by the token provider to generate access-token and refresh-token upon authentication */
 	private CustomeUser getCustomUserFromUserDTO(UserDTO userDTO) {
 		Role role = roleService.getRoleByUserId(userDTO.getUserId());
-		User user = userService.getUser(userDTO.getEmail());
+		User user = UserDTOMapper.fromUserDTO(userService.getUserByEmail(userDTO.getEmail()));
 		return new CustomeUser(user, role);
 	}
 

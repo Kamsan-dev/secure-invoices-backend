@@ -12,4 +12,6 @@ public class UserQuery {
 			"INSERT INTO TwoFactorVerifications (user_id, code, expiration_date) VALUES (:userId, :code, :expirationDate)";
 	public static final String SELECT_USER_BY_CODE_USER_QUERY = 
 			"SELECT * FROM Users WHERE user_id = (SELECT user_id from TwoFactorVerifications WHERE code = :code)";
+	public static final String SELECT_CODE_EXPIRATION_QUERY = 
+	"SELECT expiration_date < NOW() FROM TwoFactorVerifications WHERE code = :code";
 }

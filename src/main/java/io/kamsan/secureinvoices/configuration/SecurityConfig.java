@@ -15,7 +15,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import io.kamsan.secureinvoices.filter.CustomAuthorizationFilter;
 import io.kamsan.secureinvoices.handler.CustomeAccessDeniedHandler;
 import io.kamsan.secureinvoices.handler.CustomeAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class SecurityConfig {
 	private final CustomeAuthenticationEntryPoint customeAuthenticationEntryPoint;
 	private final UserDetailsService userDetailsService;
 	private final PasswordEncoder passwordEncoder;
+	private final CustomAuthorizationFilter customAuthorizationFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,6 +48,7 @@ public class SecurityConfig {
 						.hasAuthority("DELETE:CUSTOMER"))
 				.exceptionHandling(eh -> eh.accessDeniedHandler(customeAccessDeniedHandler).authenticationEntryPoint(customeAuthenticationEntryPoint))
 				.authorizeHttpRequests(ar -> ar.anyRequest().authenticated())
+				.addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
 
 	}

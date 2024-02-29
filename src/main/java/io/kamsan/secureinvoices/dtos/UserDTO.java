@@ -2,10 +2,16 @@ package io.kamsan.secureinvoices.dtos;
 
 import java.time.LocalDateTime;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 
-@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class UserDTO {
 	
 	private Long userId;
@@ -21,5 +27,7 @@ public class UserDTO {
 	private boolean isNotLocked;
 	private boolean isUsingMfa;
 	private LocalDateTime createdAt;
+	private String roleName;
+	private String permissions;
 
 }

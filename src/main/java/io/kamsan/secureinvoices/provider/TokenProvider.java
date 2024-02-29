@@ -112,8 +112,7 @@ public class TokenProvider {
 	
 	public List<GrantedAuthority> getAuthoritiesFromToken(String token){
 		String[] claims = getClaimsFromToken(token);
-		return stream(claims).map(SimpleGrantedAuthority::new).collect(toList());
-		
+		return stream(claims).map(SimpleGrantedAuthority::new).collect(toList());		
 	}
 
 	// claims example : --customer:delete, customer:update

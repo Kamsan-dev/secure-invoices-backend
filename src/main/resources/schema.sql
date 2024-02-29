@@ -39,6 +39,9 @@ CREATE TABLE Users
 	CONSTRAINT UQ_Users_Email UNIQUE (email)
 );
 
+/*INSERT INTO Users (first_name, last_name, email, password) 
+VALUES ('John', 'Doe', 'john.doe@gmail.com', '1234');*/
+
 -----------------------------------------------------------------
 
 DROP TABLE IF EXISTS Roles;
