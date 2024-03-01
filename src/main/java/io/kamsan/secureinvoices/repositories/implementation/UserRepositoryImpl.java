@@ -1,11 +1,10 @@
 package io.kamsan.secureinvoices.repositories.implementation;
 
 import static io.kamsan.secureinvoices.enums.RoleType.ROLE_USER;
-import static io.kamsan.secureinvoices.enums.VerificationType.ACCOUNT;
+import static io.kamsan.secureinvoices.enums.VerificationType.*;
 import static io.kamsan.secureinvoices.query.UserQuery.*;
-
-import static org.apache.commons.lang3.time.DateUtils.addDays;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.time.DateUtils.addDays;
 
 import java.util.Collection;
 import java.util.Date;
@@ -28,9 +27,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
-import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
+import io.kamsan.secureinvoices.enums.VerificationType;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
@@ -76,7 +75,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			// If any errors, throw exception with proper message
 		} catch (Exception exception) {
 			log.error(exception.getMessage());
-			throw new ApiException("An error occured, please try again LOL");
+			throw new ApiException("An error occured when registering a user, please try again.");
 		}
 	}
 
@@ -130,7 +129,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		}
 	}
 	
-
+	/* ------- TWO FACTORS VERIFICATIONS ------- */
 	@Override
 	public void sendVerificationCode(User user) {
 		
@@ -180,8 +179,80 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured inside verifyCode, please try again ");
 		}
 	}
+	
+	/* ------- END TWO FACTORS VERIFICATIONS ------- */
+	
+	
+	/* ------- RESET PASSWORD ------- */
+	
+	@Override
+	public void resetPassword(String email) {
+		if (getEmailCount(email.trim().toLowerCase()) <= 0) throw new ApiException("There is no account for this email address.");
+		
+		try {
+			String expirationDate = DateFormatUtils.format(addDays(new Date(), 1), DATE_FORMAT);
+			User user = getUserByEmail(email);
+			String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), PASSWORD.getType());
+			// Save URL in reset password verification table
+			jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USERID_QUERY, Map.of("userId", user.getUserId()));
+			jdbc.update(INSERT_URL_PASSWORD_VERIFICATION_CODE_QUERY, 
+					Map.of("userId", user.getUserId(), "url", verificationUrl, "expirationDate", expirationDate));
+			log.info("verification Url : {}", verificationUrl);
+			// TODO send email with url to user
+			} catch (Exception exception) {
+				throw new ApiException("An error occured inside resetPassword, please try again");
+			}
+	}
+	
+	@Override
+	public User verifyPasswordKey(String key) {
+		// check if the url used to change password is expired or not.
+		if (isUrlExpired(key, PASSWORD)) throw new ApiException("This url has expired. Please try again");
+		try {
+			User user = jdbc.queryForObject(SELECT_USER_BY_PASSWORD_URL_QUERY, 
+					Map.of("url", getVerificationUrl(key, PASSWORD.getType())), new UserRowMapper());
+			//jdbc.update(DELETE_PASSWORD_URL_BY_USERID_QUERY, Map.of("userId", user.getUserId()));
+			return user;
+		} catch (EmptyResultDataAccessException exception) {
+			log.error(exception.getMessage());
+			throw new ApiException("This url is not valid. Please try again");
+		}  
+		catch (Exception exception) {
+			throw new ApiException("An error occured inside verifyPasswordKey, please try again ");
+		}
+	}
+	
+	@Override
+	public void renewPassword(String key, String password, String confirmPassword) {
+		
+		if (!password.equals(confirmPassword)) throw new ApiException("Passwords do not match. Please try again");
+		try {
+			jdbc.update(UPDATE_USER_PASSWORD_BY_URL_QUERY, Map.of("url", getVerificationUrl(key, PASSWORD.getType()), "password", 
+							encoder.encode(confirmPassword)));
+			jdbc.update(DELETE_VERIFICATION_BY_URL_QUERY, Map.of("url", getVerificationUrl(key, PASSWORD.getType())));
+		} catch (EmptyResultDataAccessException exception) {
+			throw new ApiException("This url is not valid. Please try again");
+		}  
+		catch (Exception exception) {
+			throw new ApiException("An error occured inside renewPassword, please try again ");
+		}
+	}
+		
 
 	/* Private methods */
+	
+	private Boolean isUrlExpired(String key, VerificationType password) {
+		try {
+			return jdbc.queryForObject(SELECT_EXPIRATION_BY_URL_QUERY, 
+					Map.of("url", getVerificationUrl(key, password.getType())), Boolean.class);
+			
+		} catch (EmptyResultDataAccessException exception) {
+			log.error(exception.getMessage());
+			throw new ApiException("This url is not valid. Please try again");
+		} catch (Exception exception) {
+			throw new ApiException("An error occured inside isUrlExpired, please try again ");
+		}
+	}
 	
 	private Integer getEmailCount(String email) {
 		return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, Map.of("email", email), Integer.class);
@@ -197,6 +268,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	}
 	
 	private String getVerificationUrl(String key, String type) {
+		// return url for the server for the dev
 		return ServletUriComponentsBuilder.fromCurrentContextPath()
 				.path("/user/verify/" + type + "/" + key).toUriString();
 	}

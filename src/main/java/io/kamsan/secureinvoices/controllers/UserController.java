@@ -93,6 +93,51 @@ public class UserController {
 				.statusCode(HttpStatus.OK.value())
 				.build());
 	}
+	
+	// to reset password when user is not logged in.
+	
+	@GetMapping("/resetpassword/{email}")
+	public ResponseEntity<HttpResponse> resetPassword(@PathVariable("email") String email) {
+		userService.resetPassword(email);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message("We’ve sent you an email. Please check your email to reset your password.")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@GetMapping("/verify/password/{key}")
+	public ResponseEntity<HttpResponse> verifyPasswordKey(@PathVariable("key") String key) {
+		UserDTO userDTO = userService.verifyPasswordKey(key);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", userDTO))
+				.message("Please enter a new password")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@PostMapping("/resetpassword/{key}/{password}/{confirmPassword}")
+	public ResponseEntity<HttpResponse> resetPasswordWithKey(@PathVariable("key") String key, 
+			@PathVariable("password") String password, @PathVariable("confirmPassword") String confirmPassword) {
+		userService.renewPassword(key, password, confirmPassword);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message("Password has been reset successfully.")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	// END - to reset password when user is not logged in.
 
 	/* handle white label error */
 	@RequestMapping("/error")
