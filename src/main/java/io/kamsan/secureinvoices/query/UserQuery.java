@@ -32,4 +32,10 @@ public class UserQuery {
 			"UPDATE Users SET password = :password WHERE user_id = (SELECT user_id from ResetPasswordVerification WHERE url = :url)";
 
 	public static final String DELETE_VERIFICATION_BY_URL_QUERY = "DELETE FROM ResetPasswordVerification where url = :url";
+
+
+	public static final String SELECT_USER_BY_ACCOUNT_URL_QUERY = 
+			"SELECT * FROM Users WHERE user_id = (SELECT user_id from AccountVerification WHERE url = :url)";
+
+	public static final String UPDATE_USER_ENABLED_QUERY = "UPDATE Users SET enabled = :enabled WHERE user_id = :userId";
 }

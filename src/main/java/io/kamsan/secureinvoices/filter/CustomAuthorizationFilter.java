@@ -33,7 +33,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 	protected static final String EMAIL_KEY  = "email";
 	private static final String TOKEN_PREFIX = "Bearer ";
 	private static final String AUTHORIZATION = "Authorization";
-	private static final String[] PUBLIC_ROUTES = {"/user/register", "/user/login", "/user/verify/code"};
+	private static final String[] PUBLIC_ROUTES = {"/user/register", "/user/login", "/user/verify/code", 
+			"/user/refresh/token"};
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filter)
@@ -60,7 +61,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 	}
 	
 	private String getToken(HttpServletRequest request) {
-		return ofNullable(request.getHeader("Authorization"))
+		return ofNullable(request.getHeader(AUTHORIZATION))
 				.filter(header -> header.startsWith(TOKEN_PREFIX))
 				.map(token -> token.replace(TOKEN_PREFIX, EMPTY)).get();
 	}

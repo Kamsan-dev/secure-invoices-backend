@@ -49,6 +49,8 @@ public class UserController {
 	private final TokenProvider tokenProvider;
 	private final HttpServletRequest request;
 	private final HttpServletResponse response;
+	private static final String TOKEN_PREFIX = "Bearer ";
+	private static final String AUTHORIZATION = "Authorization";
 
 	@PostMapping("/login")
 	public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
@@ -89,6 +91,20 @@ public class UserController {
 				.timeStamp(now().toString())
 				.data(of("user", userDTO))
 				.message("Profile retrieved")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@GetMapping("/verify/account/{key}")
+	public ResponseEntity<HttpResponse> verifyAccount(@PathVariable("key") String key) {
+		UserDTO userDTO = userService.verifyAccountKey(key);
+		String message = (userDTO.isEnabled()) ? "Your account is already verified" : "Your account has been verified";
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message(message)
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());
@@ -140,17 +156,28 @@ public class UserController {
 	// END - to reset password when user is not logged in.
 
 	/* handle white label error */
+//	@RequestMapping("/error")
+//	public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {
+//		return ResponseEntity.badRequest().body(
+//				HttpResponse.builder()
+//					.timeStamp(now().toString())
+//					.reason("There is no mapping for a " + request.getMethod() + " request for this path on the server")
+//					.path(request.getRequestURI())
+//					.status(HttpStatus.NOT_FOUND)
+//					.statusCode(HttpStatus.NOT_FOUND.value())
+//					.build()
+//		);
+//	}
+	
 	@RequestMapping("/error")
 	public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {
-		return ResponseEntity.badRequest().body(
-				HttpResponse.builder()
+		return new ResponseEntity<>(HttpResponse.builder()
 					.timeStamp(now().toString())
 					.reason("There is no mapping for a " + request.getMethod() + " request for this path on the server")
 					.path(request.getRequestURI())
 					.status(HttpStatus.NOT_FOUND)
 					.statusCode(HttpStatus.NOT_FOUND.value())
-					.build()
-		);
+					.build(),(HttpStatus.NOT_FOUND));
 	}
 	
 	@GetMapping("/verify/code/{email}/{code}")
@@ -160,6 +187,53 @@ public class UserController {
 	}
 	
 	
+	@GetMapping("/refresh/token")
+	public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
+		log.info("inside refreshToken");
+		if (isHeaderAndTokenValid(request)) {
+			String refreshtoken = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
+			UserDTO userDTO = userService.getUserByEmail(tokenProvider.getSubject(refreshtoken, request));	
+			return ResponseEntity.ok().body(HttpResponse.builder()
+					.timeStamp(now().toString())
+					.data(of("user", userDTO, "access-token", 
+							tokenProvider.createAccessToken(getCustomUserFromUserDTO(userDTO)),
+							"refresh-token", refreshtoken))
+					.message("Token refreshed")
+					.status(HttpStatus.OK)
+					.statusCode(HttpStatus.OK.value())
+					.build());
+		}
+		else {
+			return ResponseEntity.badRequest().body(
+					HttpResponse.builder()
+						.timeStamp(now().toString())
+						.reason("Refresh token missing or invalid")
+						.developerMessage("Refresh token missing or invalid")
+						.status(HttpStatus.NOT_FOUND)
+						.statusCode(HttpStatus.NOT_FOUND.value())
+						.build()
+			);
+		}
+
+	}
+	
+//	private boolean isHeaderAndTokenValid(HttpServletRequest request) {
+//		String token = request.getHeader("Authorization").substring(TOKEN_PREFIX.length());
+//		String subject = tokenProvider.getSubject(token, request);
+//		
+//		return (request.getHeader(AUTHORIZATION) != null &&
+//				request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX) &&
+//				tokenProvider.isTokenValid(subject, token));
+//	}
+	
+	private boolean isHeaderAndTokenValid(HttpServletRequest request) {
+        return  request.getHeader(AUTHORIZATION) != null
+                &&  request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
+                && tokenProvider.isTokenValid(
+                        tokenProvider.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()), request),
+                        request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length())
+                            );
+    }
 
 	private URI getURI() {
 		return URI

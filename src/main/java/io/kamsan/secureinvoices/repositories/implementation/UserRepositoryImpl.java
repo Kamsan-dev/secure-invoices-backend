@@ -66,6 +66,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			// Save URL in verification table
 			jdbc.update(INSERT_ACCOUNT_VERIFICATION_QUERY,
 					Map.of("userId", user.getUserId(), "url", verificationUrl));
+			log.info("verification Url : {}", verificationUrl);
 			// Send email to user with verification URL
 			//emailService.sendVerificationUrl(user.getFirstName(), user.getEmail(), verificationUrl, ACCOUNT.getType());
 			user.setEnabled(false);
@@ -237,6 +238,24 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured inside renewPassword, please try again ");
 		}
 	}
+	
+	/* ------- VERIFY ACCOUNT USER ------- */
+	
+	@Override
+	public User verifyAccountKey(String key) {
+		try {
+			User user = jdbc.queryForObject(SELECT_USER_BY_ACCOUNT_URL_QUERY, 
+					Map.of("url", getVerificationUrl(key, ACCOUNT.getType())), new UserRowMapper());
+			jdbc.update(UPDATE_USER_ENABLED_QUERY, Map.of("enabled", true, "userId", user.getUserId()));
+			return user;
+		} catch (EmptyResultDataAccessException exception) {
+			log.error(exception.getMessage());
+			throw new ApiException("This url is not valid. Please try again");
+		}  
+		catch (Exception exception) {
+			throw new ApiException("An error occured inside verifyAccountKey, please try again ");
+		}
+	}
 		
 
 	/* Private methods */
@@ -272,5 +291,4 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		return ServletUriComponentsBuilder.fromCurrentContextPath()
 				.path("/user/verify/" + type + "/" + key).toUriString();
 	}
-
 }
