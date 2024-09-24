@@ -4,6 +4,9 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import io.kamsan.secureinvoices.dtos.UserDTO;
+import io.kamsan.secureinvoices.entities.Role;
+import io.kamsan.secureinvoices.entities.User;
+
 import java.util.Date;
 import java.util.List;
 
@@ -23,7 +26,10 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
+import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
+import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
+import io.kamsan.secureinvoices.services.implementation.RoleServiceImpl;
 import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +48,7 @@ public class TokenProvider {
 	// 5 days expiration
 	private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
 	private final UserService userService;
+	private final RoleService roleService;
 	
 	@Value("${jwt.secret}")
 	private String secret;
@@ -89,8 +96,11 @@ public class TokenProvider {
 	
 	public Authentication getAuthentication(String email, 
 			List<GrantedAuthority> authorities, HttpServletRequest request) {
-		UserDTO user = userService.getUserByEmail(email);
-		UsernamePasswordAuthenticationToken userPasswordAuthToken = new UsernamePasswordAuthenticationToken(user, null, authorities);
+		UserDTO userDTO = this.userService.getUserByEmail(email);
+		User user = UserDTOMapper.fromUserDTO(userDTO);
+		Role role = roleService.getRoleByUserId(user.getUserId());
+		CustomeUser customeUser = new CustomeUser(user, role);
+		UsernamePasswordAuthenticationToken userPasswordAuthToken = new UsernamePasswordAuthenticationToken(customeUser, null, authorities);
 		userPasswordAuthToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 		return userPasswordAuthToken;
 	}

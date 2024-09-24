@@ -81,7 +81,7 @@ public class HandleException extends ResponseEntityExceptionHandler implements E
         return new ResponseEntity<>(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .reason("Incorrect email or password")
+                        .reason("Bad credentials !")
                         .developerMessage(exception.getMessage())
                         .status(BAD_REQUEST)
                         .statusCode(BAD_REQUEST.value())

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -84,12 +85,12 @@ public class UserController {
 	
 	@GetMapping("/profile")
 	public ResponseEntity<HttpResponse> profile(Authentication authentication) {
-		UserDTO userDTO = userService.getUserByEmail(authentication.getName());
+		UserDTO user = getAuthenticatedUser(authentication);
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", userDTO))
+				.data(of("user", user))
 				.message("Profile retrieved")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -244,9 +245,9 @@ public class UserController {
 		return ResponseEntity.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", userDTO, "access-token", 
+				.data(of("user", userDTO, "access_token", 
 						tokenProvider.createAccessToken(getCustomUserFromUserDTO(userDTO)),
-						"refresh-token", tokenProvider.createRefreshToken(getCustomUserFromUserDTO(userDTO))))
+						"refresh_token", tokenProvider.createRefreshToken(getCustomUserFromUserDTO(userDTO))))
 				.message("Login Success")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -280,8 +281,8 @@ public class UserController {
 					.authenticate(new UsernamePasswordAuthenticationToken(email, password));
 			return authentication;
 		} catch (Exception exception) {
-			ExceptionUtils.processError(request, response, exception);
-			throw new ApiException(exception.getMessage());
+			//ExceptionUtils.processError(request, response, exception);
+			throw new ApiException("Incorrect email or password.");
 		}
 	}
 }

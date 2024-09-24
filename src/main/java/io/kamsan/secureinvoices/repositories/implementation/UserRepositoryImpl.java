@@ -175,7 +175,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			return jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, Map.of("code", code), Boolean.class);
 			
 		} catch (EmptyResultDataAccessException exception) {
-			throw new ApiException("This code is not valid. Please login again");
+			throw new ApiException("Code is invalid. Please try again !");
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside verifyCode, please try again ");
 		}
