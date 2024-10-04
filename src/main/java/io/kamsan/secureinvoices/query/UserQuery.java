@@ -38,4 +38,17 @@ public class UserQuery {
 			"SELECT * FROM Users WHERE user_id = (SELECT user_id from AccountVerification WHERE url = :url)";
 
 	public static final String UPDATE_USER_ENABLED_QUERY = "UPDATE Users SET enabled = :enabled WHERE user_id = :userId";
+	
+	public static final String UPDATE_USER_DETAILS_QUERY = "UPDATE Users " +
+            "SET first_name = :firstName, " +
+            "last_name = :lastName, " +
+            "email = :email, " +
+            "phone = :phone, " +
+            "address = :address, " +
+            "bio = :bio, " +
+            "title = :title " +
+            "WHERE user_id = :user_id";
+	
+	public static final String SELECT_USER_BY_USERID_QUERY = "SELECT * from Users where user_id = :user_id";
+
 }

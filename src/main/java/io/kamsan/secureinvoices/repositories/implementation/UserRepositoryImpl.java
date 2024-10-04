@@ -31,6 +31,7 @@ import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.enums.VerificationType;
 import io.kamsan.secureinvoices.exceptions.ApiException;
+import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
 import io.kamsan.secureinvoices.rowmapper.UserRowMapper;
@@ -88,8 +89,16 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
 	@Override
 	public User get(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			User user = jdbc.queryForObject(SELECT_USER_BY_USERID_QUERY, Map.of("user_id", id), new UserRowMapper());
+			return user;
+		}
+		catch (EmptyResultDataAccessException exception) {
+			throw new ApiException("User with id" + id + " cannot be retrieved");
+		} catch (Exception exception) {
+	        log.error("Error updating user details", exception);  // Log the full exception
+			throw new ApiException("An error occured inside getUser, please try again ");
+		}
 	}
 
 	@Override
@@ -102,6 +111,21 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	public Boolean delete(Long id) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	@Override
+	public User updateUserDetails(UpdateUserForm user) {
+		try {
+			SqlParameterSource parameters = getUserDetailsSqlParametersSource(user);
+			jdbc.update(UPDATE_USER_DETAILS_QUERY,parameters);
+			log.info("inside updateUserdetails");
+			return get(user.getUserId());
+		} catch (EmptyResultDataAccessException exception) {
+			throw new ApiException("No user found by id : " + user.getUserId());
+		} 
+		catch(Exception ex) {
+			throw new ApiException("An error occured when updating user details");
+		}
 	}
 	
 	@Override
@@ -277,6 +301,13 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, Map.of("email", email), Integer.class);
 	}
 	
+	
+	private String getVerificationUrl(String key, String type) {
+		// return url for the server for the dev
+		return ServletUriComponentsBuilder.fromCurrentContextPath()
+				.path("/user/verify/" + type + "/" + key).toUriString();
+	}
+	
 
 	private SqlParameterSource getSqlParametersSource(User user) {
 		return new MapSqlParameterSource()
@@ -286,9 +317,17 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 				.addValue("password", encoder.encode(user.getPassword())); 
 	}
 	
-	private String getVerificationUrl(String key, String type) {
-		// return url for the server for the dev
-		return ServletUriComponentsBuilder.fromCurrentContextPath()
-				.path("/user/verify/" + type + "/" + key).toUriString();
+	private SqlParameterSource getUserDetailsSqlParametersSource(UpdateUserForm user) {
+		log.info("User parsed: userId = {}", user.getAddress());
+		return new MapSqlParameterSource()
+				.addValue("user_id", user.getUserId())
+				.addValue("firstName", user.getFirstName())
+				.addValue("lastName", user.getLastName())
+				.addValue("email", user.getEmail())
+				.addValue("phone", user.getPhone())
+				.addValue("address", user.getAddress()) 
+				.addValue("title", user.getTitle())
+				.addValue("bio", user.getBio());
+		
 	}
 }

@@ -11,8 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,10 +28,10 @@ import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.LoginForm;
+import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
-import io.kamsan.secureinvoices.utils.ExceptionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -92,6 +92,20 @@ public class UserController {
 				.timeStamp(now().toString())
 				.data(of("user", user))
 				.message("Profile retrieved")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@PatchMapping("/update")
+	public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateUserForm user) {
+		UserDTO updatedUser = userService.updateUserDetails(user);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", updatedUser))
+				.message("User informations updated")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());

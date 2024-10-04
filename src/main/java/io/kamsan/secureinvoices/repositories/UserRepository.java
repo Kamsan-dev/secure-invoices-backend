@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.User;
+import io.kamsan.secureinvoices.form.UpdateUserForm;
 
 public interface UserRepository<T extends User> {
 	
@@ -23,6 +24,7 @@ public interface UserRepository<T extends User> {
 	User verifyPasswordKey(String key);
 	void renewPassword(String key, String password, String confirmPassword);
 	User verifyAccountKey(String key);
+	User updateUserDetails(UpdateUserForm user);
 	
 
 }

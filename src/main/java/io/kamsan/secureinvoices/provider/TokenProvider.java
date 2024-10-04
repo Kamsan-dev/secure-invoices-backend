@@ -44,7 +44,7 @@ public class TokenProvider {
 	private static final String CUSTOMER_MANAGEMENT_SERVICES = "CUSTOMER_MANAGEMENT_SERVICES";
 	private static final String AUTHORITIES = "authorities";
 	// 30 min expiration
-	private static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
+	private static final long ACCESS_TOKEN_EXPIRATION_TIME = 432_000_000; // 1_800_000;
 	// 5 days expiration
 	private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
 	private final UserService userService;

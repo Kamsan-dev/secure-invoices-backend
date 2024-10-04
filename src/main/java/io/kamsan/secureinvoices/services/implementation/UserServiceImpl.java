@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
+import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
 import io.kamsan.secureinvoices.services.UserService;
@@ -64,5 +65,11 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public UserDTO verifyAccountKey(String key) {
 		return mapToUserDTO(userRepository.verifyAccountKey(key));
+	}
+
+	@Override
+	public UserDTO updateUserDetails(UpdateUserForm user) {
+		return mapToUserDTO(userRepository.updateUserDetails(user));
+
 	}
 }
