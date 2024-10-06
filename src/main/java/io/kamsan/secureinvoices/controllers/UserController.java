@@ -207,7 +207,7 @@ public class UserController {
 		log.info("inside refreshToken");
 		if (isHeaderAndTokenValid(request)) {
 			String refreshtoken = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-			UserDTO userDTO = userService.getUserByEmail(tokenProvider.getSubject(refreshtoken, request));	
+			UserDTO userDTO = userService.getUserById(tokenProvider.getSubject(refreshtoken, request));	
 			return ResponseEntity.ok().body(HttpResponse.builder()
 					.timeStamp(now().toString())
 					.data(of("user", userDTO, "access-token", 

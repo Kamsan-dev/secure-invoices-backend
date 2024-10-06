@@ -41,12 +41,12 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 			throws ServletException, IOException {
 		
 		try {
-			Map<String,String> values = getRequestValues(request);
+			Long userId = getUserId(request);
 			String token = getToken(request);
-			if (tokenProvider.isTokenValid(values.get(EMAIL_KEY), token)) {
-				List<GrantedAuthority> authorities = tokenProvider.getAuthoritiesFromToken(values.get(TOKEN_KEY));
-				Authentication authentication = tokenProvider.getAuthentication(values.get(EMAIL_KEY), authorities, request);
-				// Set the subject authenticated with this email and with those authorities inside the security context 
+			if (tokenProvider.isTokenValid(userId, token)) {
+				List<GrantedAuthority> authorities = tokenProvider.getAuthoritiesFromToken(token);
+				Authentication authentication = tokenProvider.getAuthentication(userId, authorities, request);
+				// Set the subject authenticated with this id and with those authorities inside the security context 
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 			} else {
 				SecurityContextHolder.clearContext();
@@ -66,12 +66,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 				.map(token -> token.replace(TOKEN_PREFIX, EMPTY)).get();
 	}
 
-	private Map<String, String> getRequestValues(HttpServletRequest request) {
-		return Map.of
-			(
-				EMAIL_KEY, tokenProvider.getSubject(getToken(request), request), 
-				TOKEN_KEY, getToken(request)
-			);
+	private Long getUserId(HttpServletRequest request) {
+		return tokenProvider.getSubject(getToken(request), request);
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import io.kamsan.secureinvoices.entities.User;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -60,7 +61,7 @@ public class TokenProvider {
 				.withIssuer(SECUREINVOICES)
 				.withAudience(CUSTOMER_MANAGEMENT_SERVICES)
 				.withIssuedAt(new Date())
-				.withSubject(customeUser.getUsername())
+				.withSubject(String.valueOf(customeUser.getUser().getUserId()))
 				.withArrayClaim(AUTHORITIES, claims)
 				.withExpiresAt(new Date(currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
 				.sign(Algorithm.HMAC512(secret.getBytes()));
@@ -73,16 +74,16 @@ public class TokenProvider {
 				.withIssuer(SECUREINVOICES)
 				.withAudience(CUSTOMER_MANAGEMENT_SERVICES)
 				.withIssuedAt(new Date())
-				.withSubject(customeUser.getUsername())
+				.withSubject(String.valueOf(customeUser.getUser().getUserId()))
 				.withExpiresAt(new Date(currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_TIME))
 				.sign(Algorithm.HMAC512(secret.getBytes()));
 
 	}
 
 	
-	public String getSubject (String token, HttpServletRequest request) {
+	public Long getSubject (String token, HttpServletRequest request) {
 		try {
-			return String.valueOf(getJWTVerifier().verify(token).getSubject());
+			return Long.valueOf(getJWTVerifier().verify(token).getSubject());
 		} catch (TokenExpiredException exception) {
 			request.setAttribute("expiredMessage", exception.getMessage());
 			throw exception;
@@ -94,9 +95,9 @@ public class TokenProvider {
 		}
 	}
 	
-	public Authentication getAuthentication(String email, 
+	public Authentication getAuthentication(Long userId, 
 			List<GrantedAuthority> authorities, HttpServletRequest request) {
-		UserDTO userDTO = this.userService.getUserByEmail(email);
+		UserDTO userDTO = this.userService.getUserById(userId);
 		User user = UserDTOMapper.fromUserDTO(userDTO);
 		Role role = roleService.getRoleByUserId(user.getUserId());
 		CustomeUser customeUser = new CustomeUser(user, role);
@@ -105,9 +106,9 @@ public class TokenProvider {
 		return userPasswordAuthToken;
 	}
 	
-	public boolean isTokenValid(String email, String token) {
+	public boolean isTokenValid(Long userId, String token) {
 		JWTVerifier verifier = getJWTVerifier();
-		return StringUtils.isNotEmpty(email) && !isTokenExpired(verifier, token);
+		return !Objects.isNull(userId) && !isTokenExpired(verifier, token);
 	}
 	
 	private boolean isTokenExpired(JWTVerifier verifier, String token) {
