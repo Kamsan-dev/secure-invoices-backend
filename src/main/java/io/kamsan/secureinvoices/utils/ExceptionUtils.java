@@ -10,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kamsan.secureinvoices.domain.HttpResponse;
@@ -30,6 +31,9 @@ public class ExceptionUtils {
 				|| exception instanceof LockedException 
 				|| exception instanceof BadCredentialsException) {
 			HttpResponse httpResponse = getHttpResponse(request,response, exception.getMessage(), HttpStatus.BAD_REQUEST);
+			writeResponse(response, httpResponse);
+		} else if (exception instanceof TokenExpiredException){
+			HttpResponse httpResponse = getHttpResponse(request,response, exception.getMessage(), HttpStatus.UNAUTHORIZED);
 			writeResponse(response, httpResponse);
 		} else {
 			/* unexpected error */

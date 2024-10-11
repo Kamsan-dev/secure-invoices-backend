@@ -210,9 +210,9 @@ public class UserController {
 			UserDTO userDTO = userService.getUserById(tokenProvider.getSubject(refreshtoken, request));	
 			return ResponseEntity.ok().body(HttpResponse.builder()
 					.timeStamp(now().toString())
-					.data(of("user", userDTO, "access-token", 
+					.data(of("user", userDTO, "access_token", 
 							tokenProvider.createAccessToken(getCustomUserFromUserDTO(userDTO)),
-							"refresh-token", refreshtoken))
+							"refresh_token", refreshtoken))
 					.message("Token refreshed")
 					.status(HttpStatus.OK)
 					.statusCode(HttpStatus.OK.value())
