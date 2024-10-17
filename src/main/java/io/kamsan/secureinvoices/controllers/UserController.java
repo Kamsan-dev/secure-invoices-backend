@@ -28,6 +28,7 @@ import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.LoginForm;
+import io.kamsan.secureinvoices.form.UpdatePasswordForm;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.services.RoleService;
@@ -106,6 +107,20 @@ public class UserController {
 				.timeStamp(now().toString())
 				.data(of("user", updatedUser))
 				.message("User informations updated")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@PatchMapping("/update/password")
+	public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		userService.updatePassword(userDTO.getUserId(), form.getPassword(), form.getNewPassword(), form.getConfirmPassword());
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message("Password updated successfully")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());

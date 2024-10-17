@@ -41,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService{
-	
+public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService {
+
 	private final NamedParameterJdbcTemplate jdbc;
 	private final RoleRepository<Role> roleRepository;
 	private final BCryptPasswordEncoder encoder;
@@ -52,24 +52,25 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	@Override
 	public User create(User user) {
 		// Check the email is unique
-		if (getEmailCount(user.getEmail().trim().toLowerCase()) > 0) throw new ApiException("Email already in use. Please use a different email and try again");
+		if (getEmailCount(user.getEmail().trim().toLowerCase()) > 0)
+			throw new ApiException("Email already in use. Please use a different email and try again");
 		// Save new user
 		try {
 			KeyHolder holder = new GeneratedKeyHolder();
 			/* creating parameters for SQL Query */
 			SqlParameterSource parameters = getSqlParametersSource(user);
-			jdbc.update(INSERT_USER_QUERY,parameters, holder);
+			jdbc.update(INSERT_USER_QUERY, parameters, holder);
 			user.setUserId(Objects.requireNonNull(holder.getKey().longValue()));
 			// Add role to the user
 			roleRepository.addRoleToUser(user.getUserId(), ROLE_USER.toString());
 			// Send verification url
 			String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
 			// Save URL in verification table
-			jdbc.update(INSERT_ACCOUNT_VERIFICATION_QUERY,
-					Map.of("userId", user.getUserId(), "url", verificationUrl));
+			jdbc.update(INSERT_ACCOUNT_VERIFICATION_QUERY, Map.of("userId", user.getUserId(), "url", verificationUrl));
 			log.info("verification Url : {}", verificationUrl);
 			// Send email to user with verification URL
-			//emailService.sendVerificationUrl(user.getFirstName(), user.getEmail(), verificationUrl, ACCOUNT.getType());
+			// emailService.sendVerificationUrl(user.getFirstName(), user.getEmail(),
+			// verificationUrl, ACCOUNT.getType());
 			user.setEnabled(false);
 			user.setNotLocked(true);
 			// Return the newly created user
@@ -92,11 +93,10 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		try {
 			User user = jdbc.queryForObject(SELECT_USER_BY_USERID_QUERY, Map.of("user_id", id), new UserRowMapper());
 			return user;
-		}
-		catch (EmptyResultDataAccessException exception) {
+		} catch (EmptyResultDataAccessException exception) {
 			throw new ApiException("User with id" + id + " cannot be retrieved");
 		} catch (Exception exception) {
-	        log.error("Error updating user details", exception);  // Log the full exception
+			log.error("Error updating user details", exception); // Log the full exception
 			throw new ApiException("An error occured inside getUser, please try again ");
 		}
 	}
@@ -112,22 +112,21 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public User updateUserDetails(UpdateUserForm user) {
 		try {
 			SqlParameterSource parameters = getUserDetailsSqlParametersSource(user);
-			jdbc.update(UPDATE_USER_DETAILS_QUERY,parameters);
+			jdbc.update(UPDATE_USER_DETAILS_QUERY, parameters);
 			log.info("inside updateUserdetails");
 			return get(user.getUserId());
 		} catch (EmptyResultDataAccessException exception) {
 			throw new ApiException("No user found by id : " + user.getUserId());
-		} 
-		catch(Exception ex) {
+		} catch (Exception ex) {
 			throw new ApiException("An error occured when updating user details");
 		}
 	}
-	
+
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user = getUserByEmail(email);
@@ -136,9 +135,8 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new UsernameNotFoundException("User not found in the database");
 		} else {
 			log.info("User found in the database : {}", email);
-			return new CustomeUser(user, 
-					roleRepository.getRoleByUserId(user.getUserId()));
-			
+			return new CustomeUser(user, roleRepository.getRoleByUserId(user.getUserId()));
+
 		}
 	}
 
@@ -153,33 +151,36 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured inside getUserByEmail, please try again ");
 		}
 	}
-	
+
 	/* ------- TWO FACTORS VERIFICATIONS ------- */
 	@Override
 	public void sendVerificationCode(User user) {
-		
+
 		String expirationDate = DateFormatUtils.format(addDays(new Date(), 1), DATE_FORMAT);
 		String verificationCode = randomAlphabetic(8).toUpperCase();
 		try {
 			jdbc.update(DELETE_VERIFICATION_CODE_BY_USERID_QUERY, Map.of("userId", user.getUserId()));
-			jdbc.update(INSERT_VERIFICATION_CODE_QUERY, 
+			jdbc.update(INSERT_VERIFICATION_CODE_QUERY,
 					Map.of("userId", user.getUserId(), "code", verificationCode, "expirationDate", expirationDate));
 			log.info("Verification code : {}", verificationCode);
-			//sendSMS(user.getPhone(), "From: SecureInvoices \nVerification code : \n" + verificationCode);
+			// sendSMS(user.getPhone(), "From: SecureInvoices \nVerification code : \n" +
+			// verificationCode);
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside sendVerificationCode, please try again ");
 		}
-		
+
 	}
 
 	@Override
 	public User verifyCode(String email, String code) {
 		// check if the code submitted has expired
-		if (isVerificationCodeExpired(code)) throw new ApiException("This code has expired. Please login again");
+		if (isVerificationCodeExpired(code))
+			throw new ApiException("This code has expired. Please login again");
 		try {
 			User userByEmail = this.getUserByEmail(email);
-			User userByCode = jdbc.queryForObject(SELECT_USER_BY_CODE_USER_QUERY, Map.of("code", code), new UserRowMapper());
-			
+			User userByCode = jdbc.queryForObject(SELECT_USER_BY_CODE_USER_QUERY, Map.of("code", code),
+					new UserRowMapper());
+
 			if (userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())) {
 				// code verified. Has to be deleted next.
 				jdbc.update(DELETE_VERIFICATION_CODE_BY_USERID_QUERY, Map.of("userId", userByCode.getUserId()));
@@ -193,102 +194,121 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured inside verifyCode, please try again ");
 		}
 	}
-	
+
 	private boolean isVerificationCodeExpired(String code) {
 		try {
 			return jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, Map.of("code", code), Boolean.class);
-			
+
 		} catch (EmptyResultDataAccessException exception) {
 			throw new ApiException("Code is invalid. Please try again !");
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside verifyCode, please try again ");
 		}
 	}
-	
+
 	/* ------- END TWO FACTORS VERIFICATIONS ------- */
-	
-	
+
 	/* ------- RESET PASSWORD ------- */
-	
+
 	@Override
 	public void resetPassword(String email) {
-		if (getEmailCount(email.trim().toLowerCase()) <= 0) throw new ApiException("There is no account for this email address.");
-		
+		if (getEmailCount(email.trim().toLowerCase()) <= 0)
+			throw new ApiException("There is no account for this email address.");
+
 		try {
 			String expirationDate = DateFormatUtils.format(addDays(new Date(), 1), DATE_FORMAT);
 			User user = getUserByEmail(email);
 			String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), PASSWORD.getType());
 			// Save URL in reset password verification table
 			jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USERID_QUERY, Map.of("userId", user.getUserId()));
-			jdbc.update(INSERT_URL_PASSWORD_VERIFICATION_CODE_QUERY, 
+			jdbc.update(INSERT_URL_PASSWORD_VERIFICATION_CODE_QUERY,
 					Map.of("userId", user.getUserId(), "url", verificationUrl, "expirationDate", expirationDate));
 			log.info("verification Url : {}", verificationUrl);
 			// TODO send email with url to user
-			} catch (Exception exception) {
-				throw new ApiException("An error occured inside resetPassword, please try again");
-			}
+		} catch (Exception exception) {
+			throw new ApiException("An error occured inside resetPassword, please try again");
+		}
 	}
-	
+
 	@Override
 	public User verifyPasswordKey(String key) {
 		// check if the url used to change password is expired or not.
-		if (isUrlExpired(key, PASSWORD)) throw new ApiException("This url has expired. Please try again");
+		if (isUrlExpired(key, PASSWORD))
+			throw new ApiException("This url has expired. Please try again");
 		try {
-			User user = jdbc.queryForObject(SELECT_USER_BY_PASSWORD_URL_QUERY, 
+			User user = jdbc.queryForObject(SELECT_USER_BY_PASSWORD_URL_QUERY,
 					Map.of("url", getVerificationUrl(key, PASSWORD.getType())), new UserRowMapper());
-			//jdbc.update(DELETE_PASSWORD_URL_BY_USERID_QUERY, Map.of("userId", user.getUserId()));
+			// jdbc.update(DELETE_PASSWORD_URL_BY_USERID_QUERY, Map.of("userId",
+			// user.getUserId()));
 			return user;
 		} catch (EmptyResultDataAccessException exception) {
 			log.error(exception.getMessage());
 			throw new ApiException("This url is not valid. Please try again");
-		}  
-		catch (Exception exception) {
+		} catch (Exception exception) {
 			throw new ApiException("An error occured inside verifyPasswordKey, please try again ");
 		}
 	}
-	
+
 	@Override
 	public void renewPassword(String key, String password, String confirmPassword) {
-		
-		if (!password.equals(confirmPassword)) throw new ApiException("Passwords do not match. Please try again");
+
+		if (!password.equals(confirmPassword))
+			throw new ApiException("Passwords do not match. Please try again");
 		try {
-			jdbc.update(UPDATE_USER_PASSWORD_BY_URL_QUERY, Map.of("url", getVerificationUrl(key, PASSWORD.getType()), "password", 
-							encoder.encode(confirmPassword)));
+			jdbc.update(UPDATE_USER_PASSWORD_BY_URL_QUERY, Map.of("url", getVerificationUrl(key, PASSWORD.getType()),
+					"password", encoder.encode(confirmPassword)));
 			jdbc.update(DELETE_VERIFICATION_BY_URL_QUERY, Map.of("url", getVerificationUrl(key, PASSWORD.getType())));
 		} catch (EmptyResultDataAccessException exception) {
 			throw new ApiException("This url is not valid. Please try again");
-		}  
-		catch (Exception exception) {
+		} catch (Exception exception) {
 			throw new ApiException("An error occured inside renewPassword, please try again ");
 		}
 	}
-	
+
+	/* ------- UPDATE USER PASSWORD ------- */
+	@Override
+	public void udpatePassword(Long userId, String password, String newPassword, String confirmPassword) {
+		if (!newPassword.equals(confirmPassword)) {
+			throw new ApiException("Password don't match. Please try again.");
+		}
+		log.info("current password : {}", password);
+		User user = get(userId);
+		if (!encoder.matches(password, user.getPassword())) {
+		    throw new ApiException("Invalid password. Please try again.");
+		}
+		try {
+			jdbc.update(UPDATE_USER_PASSWORD_BY_ID_QUERY,
+					Map.of("userId", userId, "password", encoder.encode(newPassword)));
+		} catch (Exception exception) {
+			log.error(exception.getMessage());
+			throw new ApiException("An error occured inside updatePassword, please try again ");
+		}
+	}
+
 	/* ------- VERIFY ACCOUNT USER ------- */
-	
+
 	@Override
 	public User verifyAccountKey(String key) {
 		try {
-			User user = jdbc.queryForObject(SELECT_USER_BY_ACCOUNT_URL_QUERY, 
+			User user = jdbc.queryForObject(SELECT_USER_BY_ACCOUNT_URL_QUERY,
 					Map.of("url", getVerificationUrl(key, ACCOUNT.getType())), new UserRowMapper());
 			jdbc.update(UPDATE_USER_ENABLED_QUERY, Map.of("enabled", true, "userId", user.getUserId()));
 			return user;
 		} catch (EmptyResultDataAccessException exception) {
 			log.error(exception.getMessage());
 			throw new ApiException("This url is not valid. Please try again");
-		}  
-		catch (Exception exception) {
+		} catch (Exception exception) {
 			throw new ApiException("An error occured inside verifyAccountKey, please try again ");
 		}
 	}
-		
 
 	/* Private methods */
-	
+
 	private Boolean isUrlExpired(String key, VerificationType password) {
 		try {
-			return jdbc.queryForObject(SELECT_EXPIRATION_BY_URL_QUERY, 
+			return jdbc.queryForObject(SELECT_EXPIRATION_BY_URL_QUERY,
 					Map.of("url", getVerificationUrl(key, password.getType())), Boolean.class);
-			
+
 		} catch (EmptyResultDataAccessException exception) {
 			log.error(exception.getMessage());
 			throw new ApiException("This url is not valid. Please try again");
@@ -296,38 +316,30 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured inside isUrlExpired, please try again ");
 		}
 	}
-	
+
 	private Integer getEmailCount(String email) {
 		return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, Map.of("email", email), Integer.class);
 	}
-	
-	
+
 	private String getVerificationUrl(String key, String type) {
 		// return url for the server for the dev
-		return ServletUriComponentsBuilder.fromCurrentContextPath()
-				.path("/user/verify/" + type + "/" + key).toUriString();
+		return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key)
+				.toUriString();
 	}
-	
 
 	private SqlParameterSource getSqlParametersSource(User user) {
-		return new MapSqlParameterSource()
-				.addValue("firstName", user.getFirstName())
-				.addValue("lastName", user.getLastName())
-				.addValue("email", user.getEmail())
-				.addValue("password", encoder.encode(user.getPassword())); 
+		return new MapSqlParameterSource().addValue("firstName", user.getFirstName())
+				.addValue("lastName", user.getLastName()).addValue("email", user.getEmail())
+				.addValue("password", encoder.encode(user.getPassword()));
 	}
-	
+
 	private SqlParameterSource getUserDetailsSqlParametersSource(UpdateUserForm user) {
 		log.info("User parsed: userId = {}", user.getAddress());
-		return new MapSqlParameterSource()
-				.addValue("user_id", user.getUserId())
-				.addValue("firstName", user.getFirstName())
-				.addValue("lastName", user.getLastName())
-				.addValue("email", user.getEmail())
-				.addValue("phone", user.getPhone())
-				.addValue("address", user.getAddress()) 
-				.addValue("title", user.getTitle())
+		return new MapSqlParameterSource().addValue("user_id", user.getUserId())
+				.addValue("firstName", user.getFirstName()).addValue("lastName", user.getLastName())
+				.addValue("email", user.getEmail()).addValue("phone", user.getPhone())
+				.addValue("address", user.getAddress()).addValue("title", user.getTitle())
 				.addValue("bio", user.getBio());
-		
+
 	}
 }

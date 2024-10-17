@@ -50,5 +50,7 @@ public class UserQuery {
             "WHERE user_id = :user_id";
 	
 	public static final String SELECT_USER_BY_USERID_QUERY = "SELECT * from Users where user_id = :user_id";
+	
+	public static final String UPDATE_USER_PASSWORD_BY_ID_QUERY = "UPDATE Users SET password = :password WHERE user_Id = :userId";
 
 }

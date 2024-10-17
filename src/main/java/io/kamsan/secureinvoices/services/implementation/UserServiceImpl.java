@@ -77,4 +77,10 @@ public class UserServiceImpl implements UserService {
 	public UserDTO getUserById(Long userId) {
 		return mapToUserDTO(userRepository.get(userId));
 	}
+
+	@Override
+	public void updatePassword(Long userId, String password, String newPassword, String confirmPassword) {
+		userRepository.udpatePassword(userId, password, newPassword, confirmPassword);
+		
+	}
 }
