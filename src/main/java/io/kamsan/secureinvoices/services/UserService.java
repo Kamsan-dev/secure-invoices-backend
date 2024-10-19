@@ -18,5 +18,6 @@ public interface UserService {
 	UserDTO updateUserDetails(UpdateUserForm user);
 	UserDTO getUserById(Long userId);
 	void updatePassword(Long userId, String password, String newPassword, String confirmPassword);
+	void verifyPassword(Long userId, String password);
 
 }

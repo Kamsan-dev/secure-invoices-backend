@@ -266,6 +266,15 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	}
 
 	/* ------- UPDATE USER PASSWORD ------- */
+	
+	@Override
+	public void verifyPassword(Long userId, String password) {
+		User user = get(userId);
+		if (!encoder.matches(password, user.getPassword())) {
+		    throw new ApiException("Invalid password. Please try again.");
+		}	
+	}
+	
 	@Override
 	public void udpatePassword(Long userId, String password, String newPassword, String confirmPassword) {
 		if (!newPassword.equals(confirmPassword)) {

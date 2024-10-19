@@ -26,6 +26,7 @@ public interface UserRepository<T extends User> {
 	User verifyAccountKey(String key);
 	User updateUserDetails(UpdateUserForm user);
 	void udpatePassword(Long userId, String password, String newPassword, String confirmPassword);
+	void verifyPassword(Long userId, String password);
 	
 
 }

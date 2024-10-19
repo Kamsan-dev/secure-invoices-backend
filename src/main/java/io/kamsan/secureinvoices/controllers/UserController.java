@@ -5,12 +5,14 @@ import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.net.URI;
+import java.security.Principal;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +30,7 @@ import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.LoginForm;
+import io.kamsan.secureinvoices.form.PasswordVerificationForm;
 import io.kamsan.secureinvoices.form.UpdatePasswordForm;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
@@ -112,8 +115,27 @@ public class UserController {
 				.build());
 	}
 	
+//	USER PASSWORD MANIPULATION
+	
+	@PostMapping("/update/password/verification")
+	public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid PasswordVerificationForm form) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		log.info("password received: {}", form.getPassword());
+		userService.verifyPassword(userDTO.getUserId(), form.getPassword());
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message("User password confirmed")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+
 	@PatchMapping("/update/password")
-	public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
+	public ResponseEntity<HttpResponse> updatePassword(@RequestBody @Valid UpdatePasswordForm form) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updatePassword(userDTO.getUserId(), form.getPassword(), form.getNewPassword(), form.getConfirmPassword());
 		return ResponseEntity

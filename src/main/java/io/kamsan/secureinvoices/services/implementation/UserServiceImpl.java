@@ -83,4 +83,10 @@ public class UserServiceImpl implements UserService {
 		userRepository.udpatePassword(userId, password, newPassword, confirmPassword);
 		
 	}
+
+	@Override
+	public void verifyPassword(Long userId, String password) {
+		userRepository.verifyPassword(userId, password);
+		
+	}
 }
