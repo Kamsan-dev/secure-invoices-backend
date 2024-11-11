@@ -6,12 +6,16 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 import java.net.URI;
 import java.security.Principal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -33,6 +37,7 @@ import io.kamsan.secureinvoices.form.LoginForm;
 import io.kamsan.secureinvoices.form.PasswordVerificationForm;
 import io.kamsan.secureinvoices.form.UpdatePasswordForm;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
+import io.kamsan.secureinvoices.form.UpdateUserRoleForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
@@ -94,7 +99,7 @@ public class UserController {
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", user))
+				.data(of("user", user, "roles", roleService.getRoles()))
 				.message("Profile retrieved")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -108,7 +113,7 @@ public class UserController {
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", updatedUser))
+				.data(of("user", updatedUser, "roles", roleService.getRoles()))
 				.message("User informations updated")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -147,6 +152,33 @@ public class UserController {
 				.statusCode(HttpStatus.OK.value())
 				.build());
 	}
+	
+	@PatchMapping("/update/role")
+//	@PreAuthorize("hasAuthority('ROLE_UPDATE:USER')")
+	public ResponseEntity<HttpResponse> updateRole(@RequestBody UpdateUserRoleForm roleForm) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		
+	    // Log the authorities of the authenticated user
+	    List<String> authorities = authentication.getAuthorities().stream()
+	        .map(GrantedAuthority::getAuthority)
+	        .collect(Collectors.toList());
+	    
+	    // Log the authorities (you can log it to the console, or use a logger)
+	    log.info("Authenticated user authorities: {}", String.join(", ", authorities));
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		userService.updateUserRole(userDTO.getUserId(), roleForm.getRoleName());
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
+				.timeStamp(now().toString())
+				.message("Role updated successfully")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	
 	
 	@GetMapping("/verify/account/{key}")
 	public ResponseEntity<HttpResponse> verifyAccount(@PathVariable("key") String key) {

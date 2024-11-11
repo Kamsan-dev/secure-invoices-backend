@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
 	private final UserRepository<User> userRepository;
-	private final RoleRepository<Role> rolereRepository;
+	private final RoleRepository<Role> roleRepository;
 
 	@Override
 	public UserDTO createUser(User user) {
@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private UserDTO mapToUserDTO(User user) {
-		return fromUser(user, rolereRepository.getRoleByUserId(user.getUserId()));
+		return fromUser(user, roleRepository.getRoleByUserId(user.getUserId()));
 	}
 
 	@Override
@@ -87,6 +87,12 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void verifyPassword(Long userId, String password) {
 		userRepository.verifyPassword(userId, password);
+		
+	}
+
+	@Override
+	public void updateUserRole(Long userId, String roleName) {
+		roleRepository.updateUserRole(userId, roleName);
 		
 	}
 }

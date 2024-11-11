@@ -9,5 +9,7 @@ public class RoleQuery {
 			+ " VALUES (:userId, :roleId)";
 	
 	public static final String SELECT_ROLE_BY_USERID_QUERY = "SELECT r.role_id, r.name, r.permission FROM Roles r JOIN UserRoles ur ON ur.role_id = r.role_id JOIN Users u ON u.user_id = ur.user_id WHERE u.user_id = :userId";
-
+	public static final String SELECT_ROLES_QUERY = "SELECT * from Roles ORDER BY role_id";
+	
+	public static final String UPDATE_USER_ROLE_QUERY = "UPDATE UserRoles SET role_id = :roleId WHERE user_id =:userId";
 }
