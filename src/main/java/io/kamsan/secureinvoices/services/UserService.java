@@ -21,5 +21,6 @@ public interface UserService {
 	void verifyPassword(Long userId, String password);
 	void updateUserRole(Long userId, String roleName);
 	void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
+	void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa);
 
 }

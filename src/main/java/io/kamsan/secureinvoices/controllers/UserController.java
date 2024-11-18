@@ -36,6 +36,7 @@ import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.AccountSettingsForm;
 import io.kamsan.secureinvoices.form.LoginForm;
 import io.kamsan.secureinvoices.form.PasswordVerificationForm;
+import io.kamsan.secureinvoices.form.UpdateAuthenticationForm;
 import io.kamsan.secureinvoices.form.UpdatePasswordForm;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.form.UpdateUserRoleForm;
@@ -154,11 +155,27 @@ public class UserController {
 				.build());
 	}
 	
-	@PatchMapping("/update/settings")
+	@PatchMapping("/update/account-settings")
 	public ResponseEntity<HttpResponse> updateAccountSettings(@RequestBody @Valid AccountSettingsForm form) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateAccountSettings(userDTO.getUserId(), form.getEnabled(), form.getNotLocked());
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", userService.getUserById(userDTO.getUserId())))
+				.message("Account settings updated successfully")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@PatchMapping("/update/authentication-settings")
+	public ResponseEntity<HttpResponse> updateAuthenticationSettings(@RequestBody @Valid UpdateAuthenticationForm form) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		userService.updateAuthenticationSettings(userDTO.getUserId(), form.getUsingMfa());
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()

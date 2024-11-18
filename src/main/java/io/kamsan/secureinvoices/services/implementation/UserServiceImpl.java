@@ -11,7 +11,9 @@ import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
+import io.kamsan.secureinvoices.repositories.implementation.UserRepositoryImpl;
 import io.kamsan.secureinvoices.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -99,6 +101,12 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
 		userRepository.updateAccountSettings(userId, enabled, notLocked);
+		
+	}
+
+	@Override
+	public void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa) {
+		userRepository.updateAuthenticationSettings(userId, isUsingMfa);
 		
 	}
 }

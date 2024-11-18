@@ -38,6 +38,7 @@ import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
 import io.kamsan.secureinvoices.rowmapper.RoleRowMapper;
 import io.kamsan.secureinvoices.rowmapper.UserRowMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -306,6 +307,18 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			jdbc.update(UPDATE_USER_SETTINGS_QUERY, Map.of("enabled", enabled, "userId", userId, "notLocked", notLocked));
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside updateAccountSettings, please try again ");
+		}
+	}
+	
+	/* ------- UPDATE AUTHENTICATION SETTINGS ------- */
+	@Override
+	public void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa) {
+		log.info("Updating authentication settings for user id : {}", userId);
+		try {
+			jdbc.update(UPDATE_USER_AUTHENTICATION_SETTINGS_QUERY, Map.of("isUsingMfa", isUsingMfa, "userId", userId));
+		} catch (Exception exception) {
+			log.error(exception.getMessage());
+			throw new ApiException("An error occured inside updateAuthenticationSettings, please try again ");
 		}
 	}
 

@@ -5,6 +5,7 @@ import java.util.Collection;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
+import jakarta.validation.Valid;
 
 public interface UserRepository<T extends User> {
 	
@@ -28,6 +29,7 @@ public interface UserRepository<T extends User> {
 	void udpatePassword(Long userId, String password, String newPassword, String confirmPassword);
 	void verifyPassword(Long userId, String password);
 	void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
+	void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa);
 	
 
 }
