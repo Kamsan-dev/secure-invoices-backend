@@ -27,6 +27,7 @@ public interface UserRepository<T extends User> {
 	User updateUserDetails(UpdateUserForm user);
 	void udpatePassword(Long userId, String password, String newPassword, String confirmPassword);
 	void verifyPassword(Long userId, String password);
+	void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
 	
 
 }

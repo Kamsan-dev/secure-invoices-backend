@@ -2,6 +2,8 @@ package io.kamsan.secureinvoices.repositories.implementation;
 
 import static io.kamsan.secureinvoices.enums.RoleType.ROLE_USER;
 import static io.kamsan.secureinvoices.enums.VerificationType.*;
+import static io.kamsan.secureinvoices.query.RoleQuery.SELECT_ROLE_BY_NAME_QUERY;
+import static io.kamsan.secureinvoices.query.RoleQuery.UPDATE_USER_ROLE_QUERY;
 import static io.kamsan.secureinvoices.query.UserQuery.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
@@ -34,6 +36,7 @@ import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
+import io.kamsan.secureinvoices.rowmapper.RoleRowMapper;
 import io.kamsan.secureinvoices.rowmapper.UserRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -291,6 +294,18 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		} catch (Exception exception) {
 			log.error(exception.getMessage());
 			throw new ApiException("An error occured inside updatePassword, please try again ");
+		}
+	}
+	
+	/* ------- UPDATE ACCOUNT SETTINGS ------- */
+	
+	@Override
+	public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
+		log.info("Updating account settings for user id : {}", userId);
+		try {
+			jdbc.update(UPDATE_USER_SETTINGS_QUERY, Map.of("enabled", enabled, "userId", userId, "notLocked", notLocked));
+		} catch (Exception exception) {
+			throw new ApiException("An error occured inside updateAccountSettings, please try again ");
 		}
 	}
 

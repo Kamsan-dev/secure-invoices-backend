@@ -33,6 +33,7 @@ import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.exceptions.ApiException;
+import io.kamsan.secureinvoices.form.AccountSettingsForm;
 import io.kamsan.secureinvoices.form.LoginForm;
 import io.kamsan.secureinvoices.form.PasswordVerificationForm;
 import io.kamsan.secureinvoices.form.UpdatePasswordForm;
@@ -153,18 +154,34 @@ public class UserController {
 				.build());
 	}
 	
+	@PatchMapping("/update/settings")
+	public ResponseEntity<HttpResponse> updateAccountSettings(@RequestBody @Valid AccountSettingsForm form) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		userService.updateAccountSettings(userDTO.getUserId(), form.getEnabled(), form.getNotLocked());
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", userService.getUserById(userDTO.getUserId())))
+				.message("Account settings updated successfully")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
 	@PatchMapping("/update/role")
 //	@PreAuthorize("hasAuthority('ROLE_UPDATE:USER')")
 	public ResponseEntity<HttpResponse> updateRole(@RequestBody UpdateUserRoleForm roleForm) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		
-	    // Log the authorities of the authenticated user
-	    List<String> authorities = authentication.getAuthorities().stream()
-	        .map(GrantedAuthority::getAuthority)
-	        .collect(Collectors.toList());
-	    
-	    // Log the authorities (you can log it to the console, or use a logger)
-	    log.info("Authenticated user authorities: {}", String.join(", ", authorities));
+//	    // Log the authorities of the authenticated user
+//	    List<String> authorities = authentication.getAuthorities().stream()
+//	        .map(GrantedAuthority::getAuthority)
+//	        .collect(Collectors.toList());
+//	    
+//	    // Log the authorities (you can log it to the console, or use a logger)
+//	    log.info("Authenticated user authorities: {}", String.join(", ", authorities));
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateUserRole(userDTO.getUserId(), roleForm.getRoleName());
 		return ResponseEntity
