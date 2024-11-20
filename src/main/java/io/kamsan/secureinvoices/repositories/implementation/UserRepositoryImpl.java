@@ -8,6 +8,10 @@ import static io.kamsan.secureinvoices.query.UserQuery.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -26,9 +30,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
+import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.enums.VerificationType;
@@ -378,5 +384,42 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 				.addValue("address", user.getAddress()).addValue("title", user.getTitle())
 				.addValue("bio", user.getBio());
 
+	}
+
+	/* ------- UPDATE USER IMAGE ------- */
+	
+	@Override
+	public void updateImage(UserDTO user, MultipartFile image) {
+		user.setImageUrl(getUserImageUrl(user.getEmail()));
+		saveImage(user.getEmail(), image);
+		
+	}
+
+	private void saveImage(String email, MultipartFile image) {
+	    // Define the base directory for storing images
+	    Path fileStorageLocation = Paths.get("D:\\Developpement\\AdvancedProjects\\SE_UserProfileImages")
+                .toAbsolutePath()
+                .normalize();
+	    try {
+	        // Ensure the directories exist
+	        if (!Files.exists(fileStorageLocation)) {
+	            Files.createDirectories(fileStorageLocation);
+	        }
+	        // Save the image
+	        Path targetLocation = fileStorageLocation.resolve(email + ".png");
+	        Files.copy(image.getInputStream(), targetLocation);
+	    } catch (IOException exception) {
+	        log.error("Failed to save image: {}", exception.getMessage());
+	        throw new ApiException("Unable to save the image");
+	    }
+	}
+
+
+	private String getUserImageUrl(String email) {
+		return ServletUriComponentsBuilder.fromCurrentContextPath()
+				.path("/user/update/image/")
+				.path(email)
+				.path(".png")
+				.toUriString(); 
 	}
 }

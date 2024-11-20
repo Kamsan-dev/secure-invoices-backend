@@ -1,5 +1,7 @@
 package io.kamsan.secureinvoices.services;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.User;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
@@ -22,5 +24,6 @@ public interface UserService {
 	void updateUserRole(Long userId, String roleName);
 	void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
 	void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa);
+	void updateImage(UserDTO userDTO, MultipartFile image);
 
 }

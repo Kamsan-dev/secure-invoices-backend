@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
@@ -156,6 +158,7 @@ public class UserController {
 	}
 	
 	@PatchMapping("/update/account-settings")
+	@PreAuthorize("hasAuthority('UPDATE:USER')")
 	public ResponseEntity<HttpResponse> updateAccountSettings(@RequestBody @Valid AccountSettingsForm form) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
@@ -166,6 +169,21 @@ public class UserController {
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
 				.message("Account settings updated successfully")
+				.status(HttpStatus.OK)
+				.statusCode(HttpStatus.OK.value())
+				.build());
+	}
+	
+	@PatchMapping("/update/image")
+	public ResponseEntity<HttpResponse> updateProfileImage(@RequestParam("image") MultipartFile image) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		userService.updateImage(userDTO, image);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message("Profile image updated successfully")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());
@@ -188,17 +206,17 @@ public class UserController {
 	}
 	
 	@PatchMapping("/update/role")
-//	@PreAuthorize("hasAuthority('ROLE_UPDATE:USER')")
+	@PreAuthorize("hasAuthority('UPDATE:USER')")
 	public ResponseEntity<HttpResponse> updateRole(@RequestBody UpdateUserRoleForm roleForm) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		
-//	    // Log the authorities of the authenticated user
-//	    List<String> authorities = authentication.getAuthorities().stream()
-//	        .map(GrantedAuthority::getAuthority)
-//	        .collect(Collectors.toList());
-//	    
-//	    // Log the authorities (you can log it to the console, or use a logger)
-//	    log.info("Authenticated user authorities: {}", String.join(", ", authorities));
+	    // Log the authorities of the authenticated user
+	    List<String> authorities = authentication.getAuthorities().stream()
+	        .map(GrantedAuthority::getAuthority)
+	        .collect(Collectors.toList());
+	    
+	    // Log the authorities (you can log it to the console, or use a logger)
+	    log.info("Authenticated user authorities: {}", String.join(", ", authorities));
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateUserRole(userDTO.getUserId(), roleForm.getRoleName());
 		return ResponseEntity

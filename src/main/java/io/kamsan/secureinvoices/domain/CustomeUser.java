@@ -5,6 +5,7 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,7 +16,8 @@ import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @RequiredArgsConstructor
 public class CustomeUser implements UserDetails {
     private final User user;
@@ -23,8 +25,17 @@ public class CustomeUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return stream(this.role.getPermission().split(",".trim())).map(SimpleGrantedAuthority::new).collect(toList());
+        List<GrantedAuthority> authorities = stream(this.role.getPermission().split(","))
+            .map(String::trim) // Trim any extra spaces
+            .map(SimpleGrantedAuthority::new)
+            .collect(toList());
+
+        // Log the authorities
+        log.info("Mapped authorities: {}", authorities);
+
+        return authorities;
     }
+
 
     @Override
     public String getPassword() {

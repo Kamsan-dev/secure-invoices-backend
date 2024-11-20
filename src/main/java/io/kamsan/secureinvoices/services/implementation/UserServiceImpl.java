@@ -4,6 +4,7 @@ import static io.kamsan.secureinvoices.dtomapper.UserDTOMapper.fromUser;
 import static io.kamsan.secureinvoices.dtomapper.UserDTOMapper.fromUserDTO;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
@@ -83,30 +84,35 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void updatePassword(Long userId, String password, String newPassword, String confirmPassword) {
 		userRepository.udpatePassword(userId, password, newPassword, confirmPassword);
-		
+
 	}
 
 	@Override
 	public void verifyPassword(Long userId, String password) {
 		userRepository.verifyPassword(userId, password);
-		
+
 	}
 
 	@Override
 	public void updateUserRole(Long userId, String roleName) {
 		roleRepository.updateUserRole(userId, roleName);
-		
+
 	}
 
 	@Override
 	public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
 		userRepository.updateAccountSettings(userId, enabled, notLocked);
-		
+
 	}
 
 	@Override
 	public void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa) {
 		userRepository.updateAuthenticationSettings(userId, isUsingMfa);
-		
+
+	}
+
+	@Override
+	public void updateImage(UserDTO userDTO, MultipartFile image) {
+		userRepository.updateImage(userDTO, image);
 	}
 }
