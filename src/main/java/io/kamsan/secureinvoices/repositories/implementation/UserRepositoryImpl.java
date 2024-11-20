@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -58,6 +60,8 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	private final BCryptPasswordEncoder encoder;
 	/* Default SQL format date */
 	private final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
+	@Value("${user.profile.image.path}")
+    private String imagePath;
 
 	@Override
 	public User create(User user) {
@@ -390,16 +394,21 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	
 	@Override
 	public void updateImage(UserDTO user, MultipartFile image) {
-		user.setImageUrl(getUserImageUrl(user.getEmail()));
+		String userImageUrl = getUserImageUrl(user.getEmail());
+		user.setImageUrl(userImageUrl);
 		saveImage(user.getEmail(), image);
+		try {
+			jdbc.update(UPDATE_USER_IMAGE_QUERY, Map.of("imageUrl", userImageUrl, "userId", user.getUserId()));
+		} catch(Exception exception) {
+			log.error(exception.getMessage());
+			throw new ApiException("An error occured inside updateImage, please try again");
+		}
 		
 	}
 
 	private void saveImage(String email, MultipartFile image) {
 	    // Define the base directory for storing images
-	    Path fileStorageLocation = Paths.get("D:\\Developpement\\AdvancedProjects\\SE_UserProfileImages")
-                .toAbsolutePath()
-                .normalize();
+        Path fileStorageLocation = Paths.get(imagePath).toAbsolutePath().normalize();
 	    try {
 	        // Ensure the directories exist
 	        if (!Files.exists(fileStorageLocation)) {
@@ -407,7 +416,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	        }
 	        // Save the image
 	        Path targetLocation = fileStorageLocation.resolve(email + ".png");
-	        Files.copy(image.getInputStream(), targetLocation);
+	        Files.copy(image.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 	    } catch (IOException exception) {
 	        log.error("Failed to save image: {}", exception.getMessage());
 	        throw new ApiException("Unable to save the image");
@@ -417,7 +426,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
 	private String getUserImageUrl(String email) {
 		return ServletUriComponentsBuilder.fromCurrentContextPath()
-				.path("/user/update/image/")
+				.path("/user/image/")
 				.path(email)
 				.path(".png")
 				.toUriString(); 

@@ -3,12 +3,16 @@ package io.kamsan.secureinvoices.controllers;
 import static java.time.LocalDateTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.CREATED;
-
+import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,6 +49,7 @@ import io.kamsan.secureinvoices.form.UpdateUserRoleForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
+import io.swagger.v3.oas.models.media.MediaType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -65,6 +70,8 @@ public class UserController {
 	private final HttpServletResponse response;
 	private static final String TOKEN_PREFIX = "Bearer ";
 	private static final String AUTHORIZATION = "Authorization";
+	@Value("${user.profile.image.path}")
+    private String imagePath;
 
 	@PostMapping("/login")
 	public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
@@ -182,12 +189,19 @@ public class UserController {
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
 				.timeStamp(now().toString())
 				.message("Profile image updated successfully")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
 				.build());
 	}
+	
+	@GetMapping(value="/image/{fileName}", produces = IMAGE_PNG_VALUE)
+	public byte[] getProfileImage(@PathVariable("fileName") String fileName) throws IOException {
+		return Files.readAllBytes(Paths.get(imagePath, fileName));
+	}
+	
 	
 	@PatchMapping("/update/authentication-settings")
 	public ResponseEntity<HttpResponse> updateAuthenticationSettings(@RequestBody @Valid UpdateAuthenticationForm form) {

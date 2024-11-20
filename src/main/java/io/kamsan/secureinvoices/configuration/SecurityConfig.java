@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
 	private final String[] PUBLIC_URLS = {"/user/register/**", "/user/login/**", "/user/verify/code/**", 
-			"/user/resetpassword/**", "/user/verify/password/**", "/user/verify/account/**", "/user/refresh/token/**"};
+			"/user/resetpassword/**", "/user/verify/password/**", "/user/verify/account/**", "/user/refresh/token/**", "/user/image/**"};
 	private final CustomeAccessDeniedHandler customeAccessDeniedHandler;
 	private final CustomeAuthenticationEntryPoint customeAuthenticationEntryPoint;
 	private final UserDetailsService userDetailsService;
