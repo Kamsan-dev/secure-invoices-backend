@@ -387,7 +387,6 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 				.addValue("email", user.getEmail()).addValue("phone", user.getPhone())
 				.addValue("address", user.getAddress()).addValue("title", user.getTitle())
 				.addValue("bio", user.getBio());
-
 	}
 
 	/* ------- UPDATE USER IMAGE ------- */

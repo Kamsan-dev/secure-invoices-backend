@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +39,8 @@ import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
+import io.kamsan.secureinvoices.enums.EventType;
+import io.kamsan.secureinvoices.event.NewUserEvent;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.AccountSettingsForm;
 import io.kamsan.secureinvoices.form.LoginForm;
@@ -72,11 +75,11 @@ public class UserController {
 	private static final String AUTHORIZATION = "Authorization";
 	@Value("${user.profile.image.path}")
     private String imagePath;
+	private final ApplicationEventPublisher publisher;
 
 	@PostMapping("/login")
 	public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
-		Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
-		UserDTO userAuthenticated = getAuthenticatedUser(authentication);
+		UserDTO userAuthenticated  = authenticate(loginForm.getEmail(), loginForm.getPassword());
 		/* check if user is using MFA to return the right response */
 		return (userAuthenticated.isUsingMfa()) 
 				? sendVerificationCode(userAuthenticated) : sendResponse(userAuthenticated);
@@ -424,13 +427,21 @@ public class UserController {
 	}
 	
 	/* authentication allows access to the authenticated user */
-	private Authentication authenticate(String email, String password) {
+	private UserDTO authenticate(String email, String password) {
 		try {
+			if (null != userService.getUserByEmail(email)) {
+				publisher.publishEvent(new NewUserEvent(email, EventType.LOGIN_ATTEMPT));
+			}
 			Authentication authentication = authenticationManager
 					.authenticate(new UsernamePasswordAuthenticationToken(email, password));
-			return authentication;
+			UserDTO userLoggedIn = getAuthenticatedUser(authentication);
+			if (!userLoggedIn.isUsingMfa()) {
+				publisher.publishEvent(new NewUserEvent(email, EventType.LOGIN_ATTEMPT_SUCCESS));
+			}
+			return userLoggedIn;
 		} catch (Exception exception) {
 			//ExceptionUtils.processError(request, response, exception);
+			publisher.publishEvent(new NewUserEvent(email, EventType.LOGIN_ATTEMPT_FAILURE));
 			throw new ApiException("Incorrect email or password.");
 		}
 	}
