@@ -81,6 +81,16 @@ CREATE TABLE Events
 	CONSTRAINT UQ_Events_Type UNIQUE (type)
 );
 
+INSERT INTO Events (event_id, type, description) VALUES (1, 'LOGIN_ATTEMPT', 'You tried to log in');
+INSERT INTO Events (event_id, type, description) VALUES (2, 'LOGIN_ATTEMPT_SUCCESS', 'You tried to log in and you succeeded');
+INSERT INTO Events (event_id, type, description) VALUES (3, 'LOGIN_ATTEMPT_FAILURE', 'You tried to log in and you failed');
+INSERT INTO Events (event_id, type, description) VALUES (4, 'PROFILE_UPDATE', 'You updated your profile information');
+INSERT INTO Events (event_id, type, description) VALUES (5, 'PROFILE_PICTURE_UPDATE', 'You updated your profile picture');
+INSERT INTO Events (event_id, type, description) VALUES (6, 'ROLE_UPDATE', 'You updated your role and permissions');
+INSERT INTO Events (event_id, type, description) VALUES (7, 'ACCOUNT_SETTINGS_UPDATE', 'You updated your account settings');
+INSERT INTO Events (event_id, type, description) VALUES (8, 'MFA_UPDATE', 'You updated your MFA settings');
+INSERT INTO Events (event_id, type, description) VALUES (9, 'PASSWORD_UPDATE', 'You updated your password');
+
 CREATE TABLE UserEvents 
 (
 	user_event_id 	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

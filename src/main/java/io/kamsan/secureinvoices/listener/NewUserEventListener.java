@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import io.kamsan.secureinvoices.event.NewUserEvent;
 import io.kamsan.secureinvoices.services.EventService;
+import io.kamsan.secureinvoices.utils.RequestUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ public class NewUserEventListener {
 	@EventListener
 	public void onNewUserEvent(NewUserEvent event) {
 		log.info("new user event is fired");
-		eventService.addUserEvent(event.getEmail(), event.getType(), "device", "ip address");
+		eventService.addUserEvent(event.getEmail(), event.getType(), RequestUtils.getDevice(request), RequestUtils.getIpAddress(request));
 	}
 	
 }

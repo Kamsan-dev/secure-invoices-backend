@@ -50,6 +50,7 @@ import io.kamsan.secureinvoices.form.UpdatePasswordForm;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.form.UpdateUserRoleForm;
 import io.kamsan.secureinvoices.provider.TokenProvider;
+import io.kamsan.secureinvoices.services.EventService;
 import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
 import io.swagger.v3.oas.models.media.MediaType;
@@ -67,6 +68,7 @@ public class UserController {
 
 	private final UserService userService;
 	private final RoleService roleService;
+	private final EventService eventService;
 	private final AuthenticationManager authenticationManager;
 	private final TokenProvider tokenProvider;
 	private final HttpServletRequest request;
@@ -113,7 +115,7 @@ public class UserController {
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", user, "roles", roleService.getRoles()))
+				.data(of("user", user, "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(user.getUserId())))
 				.message("Profile retrieved")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -123,11 +125,12 @@ public class UserController {
 	@PatchMapping("/update")
 	public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateUserForm user) {
 		UserDTO updatedUser = userService.updateUserDetails(user);
+		publisher.publishEvent(new NewUserEvent(updatedUser.getEmail(), EventType.PROFILE_UPDATE));
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", updatedUser, "roles", roleService.getRoles()))
+				.data(of("user", updatedUser, "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(user.getUserId())))
 				.message("User informations updated")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -157,10 +160,12 @@ public class UserController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updatePassword(userDTO.getUserId(), form.getPassword(), form.getNewPassword(), form.getConfirmPassword());
+		publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), EventType.PASSWORD_UPDATE));
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(userDTO.getUserId())))
 				.message("Password updated successfully")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -173,11 +178,12 @@ public class UserController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateAccountSettings(userDTO.getUserId(), form.getEnabled(), form.getNotLocked());
+		publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), EventType.ACCOUNT_SETTINGS_UPDATE));
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(userDTO.getUserId())))
 				.message("Account settings updated successfully")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -189,10 +195,11 @@ public class UserController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateImage(userDTO, image);
+		publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), EventType.PROFILE_PICTURE_UPDATE));
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
-				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(userDTO.getUserId())))
 				.timeStamp(now().toString())
 				.message("Profile image updated successfully")
 				.status(HttpStatus.OK)
@@ -211,11 +218,12 @@ public class UserController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateAuthenticationSettings(userDTO.getUserId(), form.getUsingMfa());
+		publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), EventType.MFA_UPDATE));
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(userDTO.getUserId())))
 				.message("Account settings updated successfully")
 				.status(HttpStatus.OK)
 				.statusCode(HttpStatus.OK.value())
@@ -236,10 +244,11 @@ public class UserController {
 	    log.info("Authenticated user authorities: {}", String.join(", ", authorities));
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		userService.updateUserRole(userDTO.getUserId(), roleForm.getRoleName());
+		publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), EventType.ROLE_UPDATE));
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
-				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles()))
+				.data(of("user", userService.getUserById(userDTO.getUserId()), "roles", roleService.getRoles(), "events", eventService.getEventsByUserId(userDTO.getUserId())))
 				.timeStamp(now().toString())
 				.message("Role updated successfully")
 				.status(HttpStatus.OK)
@@ -336,6 +345,7 @@ public class UserController {
 	@GetMapping("/verify/code/{email}/{code}")
 	public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
 		UserDTO userDTO = userService.verifyCode(email, code);
+		publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), EventType.LOGIN_ATTEMPT_SUCCESS));
 		return sendResponse(userDTO);
 	}
 	

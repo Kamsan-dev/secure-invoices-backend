@@ -57,7 +57,5 @@ public class EventRepositoryImpl implements EventRepository {
 			log.error(exception.getMessage());
 			throw new ApiException("An error occured when registering a user event, please try again.");
 		}
-
 	}
-
 }

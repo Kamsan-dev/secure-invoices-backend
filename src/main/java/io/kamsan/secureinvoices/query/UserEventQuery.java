@@ -6,7 +6,7 @@ public class UserEventQuery {
 	        + "FROM Events e "
 	        + "INNER JOIN UserEvents ue ON e.event_id = ue.event_id "
 	        + "WHERE ue.user_id = :userId "
-	        + "ORDER BY ue.occured_at DESC";
+	        + "ORDER BY ue.occured_at DESC LIMIT 5";
 	
 	public static final String INSERT_USER_EVENT_BY_EMAIL_QUERY = "INSERT INTO UserEvents "
 	        + "(user_id, event_id, device, ip_address) "
