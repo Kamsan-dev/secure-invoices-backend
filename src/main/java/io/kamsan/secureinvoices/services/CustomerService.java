@@ -13,9 +13,5 @@ public interface CustomerService {
 	Iterable<Customer> getCustomers();
 	Customer getCustomer(long id);
 	Page<Customer> searchCustomers(String keyword, int page, int size);
-	
-	// Invoice functions
-	Invoice createInvoice(Invoice invoice);
-	Page<Invoice> getInvoices(int page, int size);
-	void addInvoiceToCustomer(Long id, Long invoiceId);
+
 }

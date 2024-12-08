@@ -24,11 +24,11 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 public class CustomerServiceImpl implements CustomerService {
 
 	private final CustomerRepository customerRepository;
-	private final InvoiceRepository invoiceRepository;
 
 	@Override
 	public Customer createCustomer(Customer customer) {
 		customer.setCreatedAt(LocalDateTime.now());
+		log.info("Customer created");
 		return customerRepository.save(customer);
 	}
 
@@ -56,32 +56,6 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	public Page<Customer> searchCustomers(String keyword, int page, int size) {
 		return customerRepository.findByNameContaining(keyword, PageRequest.of(page, size));
-	}
-
-	@Override
-	public Invoice createInvoice(Invoice invoice) {
-		invoice.setIssuedAt(LocalDateTime.now());
-		invoice.setInvoiceNumber(randomAlphanumeric(8).toUpperCase());
-		return invoiceRepository.save(invoice);
-	}
-
-	@Override
-	public Page<Invoice> getInvoices(int page, int size) {
-		return invoiceRepository.findAll(PageRequest.of(page, size));
-	}
-
-	@Transactional
-	@Override
-	public void addInvoiceToCustomer(Long customerId, Long invoiceId) {
-		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new ApiException("Customer with id " + customerId + " has not been found"));
-
-		Invoice invoice = invoiceRepository.findById(invoiceId)
-				.orElseThrow(() -> new ApiException("Invoice with id " + invoiceId + " has not been found"));
-
-		// Set the customer on the invoice (owning side)
-		invoice.setCustomer(customer);
-
 	}
 
 }
