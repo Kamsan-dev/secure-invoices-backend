@@ -41,7 +41,7 @@ public class Invoice {
 	private String status;
 	private double total;
 	@ManyToOne
-	@JoinColumn(name = "customerId", nullable = false)
+	@JoinColumn(name = "customerId", nullable = true)
 	@JsonIgnore
 	private Customer customer;
 }

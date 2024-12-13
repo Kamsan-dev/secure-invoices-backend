@@ -1,21 +1,23 @@
 package io.kamsan.secureinvoices.services.implementation;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import io.kamsan.secureinvoices.domain.Statistic;
 import io.kamsan.secureinvoices.entities.Customer;
-import io.kamsan.secureinvoices.entities.Invoice;
 import io.kamsan.secureinvoices.exceptions.ApiException;
+import io.kamsan.secureinvoices.query.StatisticQuery;
 import io.kamsan.secureinvoices.repositories.CustomerRepository;
-import io.kamsan.secureinvoices.repositories.InvoiceRepository;
+import io.kamsan.secureinvoices.rowmapper.StatisticRowMapper;
 import io.kamsan.secureinvoices.services.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 
 @Service
 @Transactional
@@ -24,6 +26,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 public class CustomerServiceImpl implements CustomerService {
 
 	private final CustomerRepository customerRepository;
+	private final NamedParameterJdbcTemplate jdbc;
 
 	@Override
 	public Customer createCustomer(Customer customer) {
@@ -56,6 +59,11 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	public Page<Customer> searchCustomers(String keyword, int page, int size) {
 		return customerRepository.findByNameContaining(keyword, PageRequest.of(page, size));
+	}
+
+	@Override
+	public Statistic getStats() {
+		return jdbc.queryForObject(new StatisticQuery().STATS_QUERY, Map.of(), new StatisticRowMapper());
 	}
 
 }

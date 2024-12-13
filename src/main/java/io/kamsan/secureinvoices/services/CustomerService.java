@@ -2,8 +2,8 @@ package io.kamsan.secureinvoices.services;
 
 import org.springframework.data.domain.Page;
 
+import io.kamsan.secureinvoices.domain.Statistic;
 import io.kamsan.secureinvoices.entities.Customer;
-import io.kamsan.secureinvoices.entities.Invoice;
 
 public interface CustomerService { 
 	// Customer functions
@@ -13,5 +13,6 @@ public interface CustomerService {
 	Iterable<Customer> getCustomers();
 	Customer getCustomer(long id);
 	Page<Customer> searchCustomers(String keyword, int page, int size);
+	Statistic getStats();
 
 }
