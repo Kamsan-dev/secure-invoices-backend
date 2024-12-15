@@ -80,7 +80,7 @@ public class CustomerController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"customers", customerService.searchCustomers(keyword.orElse(""), 
+						"page", customerService.searchCustomers(keyword.orElse(""), 
 								page.orElse(0), size.orElse(10))))
 				.message("Custome retrieved")
 				.status(OK)
