@@ -35,9 +35,12 @@ public class CustomerServiceImpl implements CustomerService {
 		return customerRepository.save(customer);
 	}
 
+	@Transactional
 	@Override
 	public Customer updateCustomer(Customer customer) {
-		return customerRepository.save(customer);
+		customerRepository.save(customer);
+		log.info("customer id {}", customer.getCustomerId());
+		return this.getCustomer(customer.getCustomerId());
 	}
 
 	@Override

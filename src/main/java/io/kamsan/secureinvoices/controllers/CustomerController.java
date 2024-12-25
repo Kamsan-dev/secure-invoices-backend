@@ -5,8 +5,13 @@ import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.*;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +28,7 @@ import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Customer;
+import io.kamsan.secureinvoices.report.CustomerReport;
 import io.kamsan.secureinvoices.services.CustomerService;
 import io.kamsan.secureinvoices.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -119,6 +125,21 @@ public class CustomerController {
 				.status(CREATED)
 				.statusCode(CREATED.value())
 				.build());
+	}
+	
+	@GetMapping("/download/report")
+	public ResponseEntity<Resource> downloadReport() {
+		List<Customer> customers = new ArrayList<>();
+		customerService.getCustomers().forEach(customer -> customers.add(customer));
+		CustomerReport report = new CustomerReport(customers);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("File-Name", "customer-report.xlsx");
+		headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; File-Name=customer-report.xlsx");
+		return ResponseEntity
+				.ok()
+				.contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+				.headers(headers)
+				.body(report.export());
 	}
 	
 	private UserDTO getAuthenticatedUser (Authentication authentication) {

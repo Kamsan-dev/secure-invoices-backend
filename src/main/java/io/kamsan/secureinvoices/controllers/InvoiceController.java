@@ -73,7 +73,7 @@ public class InvoiceController {
 	
 	
 	@GetMapping("/list")
-	public ResponseEntity<HttpResponse> getCustomers(@RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
+	public ResponseEntity<HttpResponse> getInvoices(@RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity
@@ -81,7 +81,7 @@ public class InvoiceController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"invoices", invoiceService.getInvoices(page.orElse(0), size.orElse(10))))
+						"page", invoiceService.getInvoices(page.orElse(0), size.orElse(10))))
 				.message("Customers retrieved")
 				.status(OK)
 				.statusCode(OK.value())
@@ -91,20 +91,21 @@ public class InvoiceController {
 	@GetMapping("/get/{id}")
 	public ResponseEntity<HttpResponse> getInvoice(@PathVariable("id") Long id) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Invoice invoice = invoiceService.getInvoice(id);
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"invoice", invoiceService.getInvoice(id)))
+						"invoice", invoice, "customer", invoice.getCustomer()))
 				.message("Invoice retrieved")
 				.status(OK)
 				.statusCode(OK.value())
 				.build());
 	}
 	
-	@GetMapping("/add-to-customer/{id}")
+	@PostMapping("/add-to-customer/{id}")
 	public ResponseEntity<HttpResponse> addInvoiceToCustomer(@PathVariable("id") Long id, @RequestBody Invoice invoice) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
