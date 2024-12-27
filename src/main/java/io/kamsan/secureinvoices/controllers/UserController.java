@@ -4,12 +4,13 @@ import static java.time.LocalDateTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -45,6 +47,7 @@ import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.form.AccountSettingsForm;
 import io.kamsan.secureinvoices.form.LoginForm;
 import io.kamsan.secureinvoices.form.PasswordVerificationForm;
+import io.kamsan.secureinvoices.form.ResetPasswordForm;
 import io.kamsan.secureinvoices.form.UpdateAuthenticationForm;
 import io.kamsan.secureinvoices.form.UpdatePasswordForm;
 import io.kamsan.secureinvoices.form.UpdateUserForm;
@@ -53,7 +56,6 @@ import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.services.EventService;
 import io.kamsan.secureinvoices.services.RoleService;
 import io.kamsan.secureinvoices.services.UserService;
-import io.swagger.v3.oas.models.media.MediaType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -273,7 +275,6 @@ public class UserController {
 	}
 	
 	// to reset password when user is not logged in.
-	
 	@GetMapping("/resetpassword/{email}")
 	public ResponseEntity<HttpResponse> resetPassword(@PathVariable("email") String email) {
 		userService.resetPassword(email);
@@ -288,7 +289,8 @@ public class UserController {
 	}
 	
 	@GetMapping("/verify/password/{key}")
-	public ResponseEntity<HttpResponse> verifyPasswordKey(@PathVariable("key") String key) {
+	public ResponseEntity<HttpResponse> verifyPasswordKey(@PathVariable("key") String key) throws InterruptedException {
+		TimeUnit.SECONDS.sleep(3);
 		UserDTO userDTO = userService.verifyPasswordKey(key);
 		return ResponseEntity
 				.ok()
@@ -301,10 +303,11 @@ public class UserController {
 				.build());
 	}
 	
-	@PostMapping("/resetpassword/{key}/{password}/{confirmPassword}")
+	
+	@PatchMapping("/resetpassword/{key}")
 	public ResponseEntity<HttpResponse> resetPasswordWithKey(@PathVariable("key") String key, 
-			@PathVariable("password") String password, @PathVariable("confirmPassword") String confirmPassword) {
-		userService.renewPassword(key, password, confirmPassword);
+			@RequestBody @Valid ResetPasswordForm form) {
+		userService.renewPassword(key, form.getNewPassword(), form.getConfirmPassword());
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
@@ -449,7 +452,11 @@ public class UserController {
 				publisher.publishEvent(new NewUserEvent(email, EventType.LOGIN_ATTEMPT_SUCCESS));
 			}
 			return userLoggedIn;
-		} catch (Exception exception) {
+		} catch (DisabledException exception) {
+			publisher.publishEvent(new NewUserEvent(email, EventType.LOGIN_ATTEMPT_FAILURE));
+			throw new DisabledException(exception.getMessage());
+		}
+		catch (Exception exception) {
 			//ExceptionUtils.processError(request, response, exception);
 			publisher.publishEvent(new NewUserEvent(email, EventType.LOGIN_ATTEMPT_FAILURE));
 			throw new ApiException("Incorrect email or password.");

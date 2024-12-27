@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -128,7 +129,7 @@ public class CustomerController {
 	}
 	
 	@GetMapping("/download/report")
-	public ResponseEntity<Resource> downloadReport() {
+	public ResponseEntity<Resource> downloadReport() throws InterruptedException {
 		List<Customer> customers = new ArrayList<>();
 		customerService.getCustomers().forEach(customer -> customers.add(customer));
 		CustomerReport report = new CustomerReport(customers);
