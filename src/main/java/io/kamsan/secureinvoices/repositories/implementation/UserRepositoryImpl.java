@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,6 +66,7 @@ import io.kamsan.secureinvoices.form.UpdateUserForm;
 import io.kamsan.secureinvoices.repositories.RoleRepository;
 import io.kamsan.secureinvoices.repositories.UserRepository;
 import io.kamsan.secureinvoices.rowmapper.UserRowMapper;
+import io.kamsan.secureinvoices.services.EmailService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,11 +78,12 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
 	private final NamedParameterJdbcTemplate jdbc;
 	private final RoleRepository<Role> roleRepository;
+	private final EmailService emailService;
 	private final BCryptPasswordEncoder encoder;
 	/* Default SQL format date */
 	private final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
 	@Value("${user.profile.image.path}")
-    private String imagePath;
+	private String imagePath;
 
 	@Override
 	public User create(User user) {
@@ -102,7 +105,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			jdbc.update(INSERT_ACCOUNT_VERIFICATION_QUERY, Map.of("userId", user.getUserId(), "url", verificationUrl));
 			log.info("verification Url : {}", verificationUrl);
 			// Send email to user with verification URL
-			// emailService.sendVerificationUrl(user.getFirstName(), user.getEmail(),
+			sendEmail(user.getFirstName(), user.getEmail(), verificationUrl, VerificationType.ACCOUNT);
 			// verificationUrl, ACCOUNT.getType());
 			user.setEnabled(false);
 			user.setNotLocked(true);
@@ -114,6 +117,17 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured when registering a user, please try again.");
 		}
 	}
+
+	private void sendEmail(String firstName, String email, String verificationUrl, VerificationType account) {
+	    CompletableFuture.runAsync(() -> {
+	        try {
+	            emailService.sendVerificationEmail(firstName, email, verificationUrl, account);
+	        } catch (Exception exception) {
+	            throw new ApiException("Unable to send verification email upon user registration");
+	        }
+	    });
+	}
+
 
 	@Override
 	public Collection<User> list(int page, int pageSize) {
@@ -257,7 +271,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			jdbc.update(INSERT_URL_PASSWORD_VERIFICATION_CODE_QUERY,
 					Map.of("userId", user.getUserId(), "url", verificationUrl, "expirationDate", expirationDate));
 			log.info("verification Url : {}", verificationUrl);
-			// TODO send email with url to user
+			sendEmail(user.getFirstName(), email, verificationUrl, PASSWORD);
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside resetPassword, please try again");
 		}
@@ -299,15 +313,15 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	}
 
 	/* ------- UPDATE USER PASSWORD ------- */
-	
+
 	@Override
 	public void verifyPassword(Long userId, String password) {
 		User user = get(userId);
 		if (!encoder.matches(password, user.getPassword())) {
-		    throw new ApiException("Invalid password. Please try again.");
-		}	
+			throw new ApiException("Invalid password. Please try again.");
+		}
 	}
-	
+
 	@Override
 	public void udpatePassword(Long userId, String password, String newPassword, String confirmPassword) {
 		if (!newPassword.equals(confirmPassword)) {
@@ -316,7 +330,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		log.info("current password : {}", password);
 		User user = get(userId);
 		if (!encoder.matches(password, user.getPassword())) {
-		    throw new ApiException("Invalid password. Please try again.");
+			throw new ApiException("Invalid password. Please try again.");
 		}
 		try {
 			jdbc.update(UPDATE_USER_PASSWORD_BY_ID_QUERY,
@@ -326,19 +340,20 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 			throw new ApiException("An error occured inside updatePassword, please try again ");
 		}
 	}
-	
+
 	/* ------- UPDATE ACCOUNT SETTINGS ------- */
-	
+
 	@Override
 	public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
 		log.info("Updating account settings for user id : {}", userId);
 		try {
-			jdbc.update(UPDATE_USER_SETTINGS_QUERY, Map.of("enabled", enabled, "userId", userId, "notLocked", notLocked));
+			jdbc.update(UPDATE_USER_SETTINGS_QUERY,
+					Map.of("enabled", enabled, "userId", userId, "notLocked", notLocked));
 		} catch (Exception exception) {
 			throw new ApiException("An error occured inside updateAccountSettings, please try again ");
 		}
 	}
-	
+
 	/* ------- UPDATE AUTHENTICATION SETTINGS ------- */
 	@Override
 	public void updateAuthenticationSettings(Long userId, @Valid Boolean isUsingMfa) {
@@ -409,7 +424,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 	}
 
 	/* ------- UPDATE USER IMAGE ------- */
-	
+
 	@Override
 	public void updateImage(UserDTO user, MultipartFile image) {
 		String userImageUrl = getUserImageUrl(user.getEmail());
@@ -417,36 +432,32 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 		saveImage(user.getEmail(), image);
 		try {
 			jdbc.update(UPDATE_USER_IMAGE_QUERY, Map.of("imageUrl", userImageUrl, "userId", user.getUserId()));
-		} catch(Exception exception) {
+		} catch (Exception exception) {
 			log.error(exception.getMessage());
 			throw new ApiException("An error occured inside updateImage, please try again");
 		}
-		
+
 	}
 
 	private void saveImage(String email, MultipartFile image) {
-	    // Define the base directory for storing images
-        Path fileStorageLocation = Paths.get(imagePath).toAbsolutePath().normalize();
-	    try {
-	        // Ensure the directories exist
-	        if (!Files.exists(fileStorageLocation)) {
-	            Files.createDirectories(fileStorageLocation);
-	        }
-	        // Save the image
-	        Path targetLocation = fileStorageLocation.resolve(email + ".png");
-	        Files.copy(image.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-	    } catch (IOException exception) {
-	        log.error("Failed to save image: {}", exception.getMessage());
-	        throw new ApiException("Unable to save the image");
-	    }
+		// Define the base directory for storing images
+		Path fileStorageLocation = Paths.get(imagePath).toAbsolutePath().normalize();
+		try {
+			// Ensure the directories exist
+			if (!Files.exists(fileStorageLocation)) {
+				Files.createDirectories(fileStorageLocation);
+			}
+			// Save the image
+			Path targetLocation = fileStorageLocation.resolve(email + ".png");
+			Files.copy(image.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException exception) {
+			log.error("Failed to save image: {}", exception.getMessage());
+			throw new ApiException("Unable to save the image");
+		}
 	}
 
-
 	private String getUserImageUrl(String email) {
-		return ServletUriComponentsBuilder.fromCurrentContextPath()
-				.path("/user/image/")
-				.path(email)
-				.path(".png")
-				.toUriString(); 
+		return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/").path(email).path(".png")
+				.toUriString();
 	}
 }
