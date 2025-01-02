@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import io.kamsan.secureinvoices.constant.Constants;
 import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
 import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
@@ -75,8 +76,6 @@ public class UserController {
 	private final TokenProvider tokenProvider;
 	private final HttpServletRequest request;
 	private final HttpServletResponse response;
-	private static final String TOKEN_PREFIX = "Bearer ";
-	private static final String AUTHORIZATION = "Authorization";
 	@Value("${user.profile.image.path}")
     private String imagePath;
 	private final ApplicationEventPublisher publisher;
@@ -357,7 +356,7 @@ public class UserController {
 	public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
 		log.info("inside refreshToken");
 		if (isHeaderAndTokenValid(request)) {
-			String refreshtoken = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
+			String refreshtoken = request.getHeader(Constants.AUTHORIZATION).substring(Constants.TOKEN_PREFIX.length());
 			UserDTO userDTO = userService.getUserById(tokenProvider.getSubject(refreshtoken, request));	
 			return ResponseEntity.ok().body(HttpResponse.builder()
 					.timeStamp(now().toString())
@@ -393,11 +392,11 @@ public class UserController {
 //	}
 	
 	private boolean isHeaderAndTokenValid(HttpServletRequest request) {
-        return  request.getHeader(AUTHORIZATION) != null
-                &&  request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
+        return  request.getHeader(Constants.AUTHORIZATION) != null
+                &&  request.getHeader(Constants.AUTHORIZATION).startsWith(Constants.TOKEN_PREFIX)
                 && tokenProvider.isTokenValid(
-                        tokenProvider.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()), request),
-                        request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length())
+                        tokenProvider.getSubject(request.getHeader(Constants.AUTHORIZATION).substring(Constants.TOKEN_PREFIX.length()), request),
+                        request.getHeader(Constants.AUTHORIZATION).substring(Constants.TOKEN_PREFIX.length())
                             );
     }
 

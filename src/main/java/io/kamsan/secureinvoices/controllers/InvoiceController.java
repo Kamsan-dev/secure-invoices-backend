@@ -115,7 +115,7 @@ public class InvoiceController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail())))
-				.message("Customers retrieved")
+				.message("Invoice created and affected to " + customerService.getCustomer(id).getName())
 				.status(OK)
 				.statusCode(OK.value())
 				.build());

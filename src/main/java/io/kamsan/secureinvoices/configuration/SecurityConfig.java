@@ -23,6 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import io.kamsan.secureinvoices.constant.Constants;
 import io.kamsan.secureinvoices.filter.CustomAuthorizationFilter;
 import io.kamsan.secureinvoices.handler.CustomeAccessDeniedHandler;
 import io.kamsan.secureinvoices.handler.CustomeAuthenticationEntryPoint;
@@ -34,8 +35,6 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private final String[] PUBLIC_URLS = {"/user/register/**", "/user/login/**", "/user/verify/code/**", 
-			"/user/resetpassword/**", "/user/verify/password/**", "/user/verify/account/**", "/user/refresh/token/**", "/user/image/**"};
 	private final CustomeAccessDeniedHandler customeAccessDeniedHandler;
 	private final CustomeAuthenticationEntryPoint customeAuthenticationEntryPoint;
 	private final UserDetailsService userDetailsService;
@@ -48,7 +47,7 @@ public class SecurityConfig {
 		return http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.csrf(csrf -> csrf.disable())
 				.cors(Customizer.withDefaults())
-				.authorizeHttpRequests(ar -> ar.requestMatchers(PUBLIC_URLS).permitAll())
+				.authorizeHttpRequests(ar -> ar.requestMatchers(Constants.PUBLIC_URLS).permitAll())
 				.authorizeHttpRequests(
 						ar -> ar.requestMatchers(HttpMethod.DELETE, "/user/delete/**").hasAuthority("DELETE:USER"))
 				.authorizeHttpRequests(ar -> ar.requestMatchers(HttpMethod.DELETE, "/customer/delete/**")

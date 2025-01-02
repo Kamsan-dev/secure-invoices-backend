@@ -41,7 +41,7 @@ public class ExceptionUtils {
 					HttpStatus.INTERNAL_SERVER_ERROR);
 			writeResponse(response, httpResponse);
 		}
-		
+
 		log.error(exception.getMessage());
 	}
 

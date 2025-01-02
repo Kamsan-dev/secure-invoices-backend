@@ -26,6 +26,7 @@ import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 
+import io.kamsan.secureinvoices.constant.Constants;
 import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
 import io.kamsan.secureinvoices.services.RoleService;
@@ -41,13 +42,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TokenProvider {
 	
-	private static final String SECUREINVOICES = "SecureInvoices";
-	private static final String CUSTOMER_MANAGEMENT_SERVICES = "CUSTOMER_MANAGEMENT_SERVICES";
-	private static final String AUTHORITIES = "authorities";
-	// 30 min expiration
-	private static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
-	// 5 days expiration
-	private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
 	private final UserService userService;
 	private final RoleService roleService;
 	
@@ -58,12 +52,12 @@ public class TokenProvider {
 		String[] claims = getClaimsFromUser(customeUser);
 		return JWT
 				.create()
-				.withIssuer(SECUREINVOICES)
-				.withAudience(CUSTOMER_MANAGEMENT_SERVICES)
+				.withIssuer(Constants.SECUREINVOICES)
+				.withAudience(Constants.CUSTOMER_MANAGEMENT_SERVICES)
 				.withIssuedAt(new Date())
 				.withSubject(String.valueOf(customeUser.getUser().getUserId()))
-				.withArrayClaim(AUTHORITIES, claims)
-				.withExpiresAt(new Date(currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
+				.withArrayClaim(Constants.AUTHORITIES, claims)
+				.withExpiresAt(new Date(currentTimeMillis() + Constants.ACCESS_TOKEN_EXPIRATION_TIME))
 				.sign(Algorithm.HMAC512(secret.getBytes()));
 
 	}
@@ -71,11 +65,11 @@ public class TokenProvider {
 	public String createRefreshToken(CustomeUser customeUser) {
 		return JWT
 				.create()
-				.withIssuer(SECUREINVOICES)
-				.withAudience(CUSTOMER_MANAGEMENT_SERVICES)
+				.withIssuer(Constants.SECUREINVOICES)
+				.withAudience(Constants.CUSTOMER_MANAGEMENT_SERVICES)
 				.withIssuedAt(new Date())
 				.withSubject(String.valueOf(customeUser.getUser().getUserId()))
-				.withExpiresAt(new Date(currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_TIME))
+				.withExpiresAt(new Date(currentTimeMillis() + Constants.REFRESH_TOKEN_EXPIRATION_TIME))
 				.sign(Algorithm.HMAC512(secret.getBytes()));
 
 	}
@@ -131,7 +125,7 @@ public class TokenProvider {
 	// claims example : --customer:delete, customer:update
 	private String[] getClaimsFromToken(String token) {
 		JWTVerifier verifier = getJWTVerifier();
-		return verifier.verify(token).getClaim(AUTHORITIES).asArray(String.class);
+		return verifier.verify(token).getClaim(Constants.AUTHORITIES).asArray(String.class);
 	}
 
 	/* DECODE JWT Token */
@@ -139,7 +133,7 @@ public class TokenProvider {
 		JWTVerifier verifier;
 		try {
 			Algorithm algorithm = Algorithm.HMAC512(secret);
-			verifier = JWT.require(algorithm).withIssuer(SECUREINVOICES).build();
+			verifier = JWT.require(algorithm).withIssuer(Constants.SECUREINVOICES).build();
 		} catch (JWTVerificationException exception) {
 			throw new JWTVerificationException("Token cannot be verified");
 		}

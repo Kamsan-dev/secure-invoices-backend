@@ -1,15 +1,10 @@
 package io.kamsan.secureinvoices.domain;
 
 
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toList;
-
 import java.util.Collection;
-import java.util.List;
 
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import io.kamsan.secureinvoices.dtomapper.UserDTOMapper;
@@ -26,15 +21,18 @@ public class CustomeUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = stream(this.role.getPermission().split(","))
-            .map(String::trim) // Trim any extra spaces
-            .map(SimpleGrantedAuthority::new)
-            .collect(toList());
+//        List<GrantedAuthority> authorities = stream(this.role.getPermission().split(","))
+//            .map(String::trim) // Trim any extra spaces
+//            .map(SimpleGrantedAuthority::new)
+//            .collect(toList());
+//
+//        // Log the authorities
+//        log.info("Mapped authorities: {}", authorities);
+    	
+//        return authorities;
+        
+    	return AuthorityUtils.commaSeparatedStringToAuthorityList(this.role.getPermission());
 
-        // Log the authorities
-        log.info("Mapped authorities: {}", authorities);
-
-        return authorities;
     }
 
 

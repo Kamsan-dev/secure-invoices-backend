@@ -8,7 +8,7 @@ import nl.basjes.parse.useragent.UserAgent.ImmutableUserAgent;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
 public class RequestUtils {
-	
+
 	public static String getIpAddress(HttpServletRequest request) {
 		String ipAddress = "Unknown IP";
 		if (request != null) {
@@ -17,22 +17,17 @@ public class RequestUtils {
 				ipAddress = request.getRemoteAddr();
 			}
 		}
-		
+
 		return ipAddress;
 	}
-	
+
 	public static String getDevice(HttpServletRequest request) {
-		UserAgentAnalyzer uaa  =UserAgentAnalyzer
-	            .newBuilder()
-	            .hideMatcherLoadStats()
-	            .withCache(1000)
-	            .build();
-		
+		UserAgentAnalyzer uaa = UserAgentAnalyzer.newBuilder().hideMatcherLoadStats().withCache(1000).build();
+
 		ImmutableUserAgent agent = uaa.parse(request.getHeader("user-agent"));
 //		return agent.getValue(OPERATING_SYSTEM_NAME) + " - " 
 //				+ agent.getValue(AGENT_NAME) + " - " 
 //				+ agent.getValue(DEVICE_NAME);
-		return agent.getValue(AGENT_NAME) + " - " 
-		+ agent.getValue(DEVICE_NAME);
+		return agent.getValue(AGENT_NAME) + " - " + agent.getValue(DEVICE_NAME);
 	}
 }

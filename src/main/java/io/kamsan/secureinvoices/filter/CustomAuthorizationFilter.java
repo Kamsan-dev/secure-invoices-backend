@@ -6,7 +6,6 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import io.kamsan.secureinvoices.constant.Constants;
 import io.kamsan.secureinvoices.provider.TokenProvider;
 import io.kamsan.secureinvoices.utils.ExceptionUtils;
 import jakarta.servlet.FilterChain;
@@ -31,10 +31,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 	private final TokenProvider tokenProvider;
 	protected static final String TOKEN_KEY  = "token";
 	protected static final String EMAIL_KEY  = "email";
-	private static final String TOKEN_PREFIX = "Bearer ";
-	private static final String AUTHORIZATION = "Authorization";
-	private static final String[] PUBLIC_ROUTES = {"/user/register", "/user/login", "/user/verify/code", 
-			"/user/refresh/token", "/user/image"};
+
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filter)
@@ -61,9 +58,9 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 	}
 	
 	private String getToken(HttpServletRequest request) {
-		return ofNullable(request.getHeader(AUTHORIZATION))
-				.filter(header -> header.startsWith(TOKEN_PREFIX))
-				.map(token -> token.replace(TOKEN_PREFIX, EMPTY)).get();
+		return ofNullable(request.getHeader(Constants.AUTHORIZATION))
+				.filter(header -> header.startsWith(Constants.TOKEN_PREFIX))
+				.map(token -> token.replace(Constants.TOKEN_PREFIX, EMPTY)).get();
 	}
 
 	private Long getUserId(HttpServletRequest request) {
@@ -72,8 +69,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter{
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-		return request.getHeader(AUTHORIZATION) == null || !request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
-				|| request.getMethod().equalsIgnoreCase("OPTIONS") || asList(PUBLIC_ROUTES).contains(request.getRequestURI());
+		return request.getHeader(Constants.AUTHORIZATION) == null || !request.getHeader(Constants.AUTHORIZATION).startsWith(Constants.TOKEN_PREFIX)
+				|| request.getMethod().equalsIgnoreCase("OPTIONS") || asList(Constants.PUBLIC_ROUTES).contains(request.getRequestURI());
 	}
 
 }
