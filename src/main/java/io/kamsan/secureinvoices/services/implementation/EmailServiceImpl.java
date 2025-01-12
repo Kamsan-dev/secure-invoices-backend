@@ -21,11 +21,21 @@ public class EmailServiceImpl implements EmailService {
 	private final JavaMailSender mailSender;
 	@Value("${spring.mail.username}")
 	private String fromEmail;
+	@Value("${spring.mail.host}")
+	private String emailHost;
+	@Value("${spring.mail.port}")
+	private String emailPort;
+	@Value("${spring.mail.password}")
+	private String emailPassword;
 
 	@Override
 	public void sendVerificationEmail(String firstName, String email, String verificationUrl,
 			VerificationType verificationType) {
 		try {
+			System.out.println("Email source used : " + this.fromEmail);
+			System.out.println("Email host used : " + this.emailHost);
+			System.out.println("Email port used : " + this.emailPort);
+			System.out.println("Email password used : " + this.emailPassword);
 			SimpleMailMessage message = new SimpleMailMessage();
 			message.setFrom(fromEmail);
 			message.setTo(email);
@@ -35,7 +45,7 @@ public class EmailServiceImpl implements EmailService {
 			mailSender.send(message);
 			log.info("Email sent to {}", firstName);
 		} catch (Exception ex) {
-			log.error(ex.getMessage());
+			log.error(ex.getMessage(), ex.getCause());
 		}
 
 	}
