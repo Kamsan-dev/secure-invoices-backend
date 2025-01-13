@@ -14,6 +14,6 @@ public class StatisticQuery {
 			+ "FROM Invoice i\r\n"
 			+ "WHERE i.issued_at >= CURDATE() - INTERVAL 6 MONTH \r\n"
 			+ "GROUP BY YEAR(i.issued_at), MONTH(i.issued_at), i.status, DATE_FORMAT(i.issued_at, '%M %Y')\r\n"
-			+ "ORDER BY YEAR(i.issued_at) ASC, MONTH(i.issued_at) ASC";
+			+ "ORDER BY YEAR(i.issued_at) DESC, MONTH(i.issued_at) DESC";
 
 }

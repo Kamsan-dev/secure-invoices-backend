@@ -8,6 +8,7 @@ public interface InvoiceService {
 	// Invoice functions
 	Invoice createInvoice(Invoice invoice);
 	Page<Invoice> getInvoices(int page, int size);
+	Page<Invoice> getMonthlyStatusInvoices(String status, String date_range, int page, int size);
 	void addInvoiceToCustomer(Long id, Invoice invoice);
 	Invoice getInvoice(Long id);
 }

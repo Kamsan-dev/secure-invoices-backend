@@ -3,6 +3,9 @@ package io.kamsan.secureinvoices.services.implementation;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -55,6 +58,22 @@ public class InvoiceServiceImpl implements InvoiceService {
 	public Invoice getInvoice(Long id) {
 		return invoiceRepository.findById(id)
 				.orElseThrow(() -> new ApiException("Invoice with id " + id + " has not been found"));
+	}
+
+	@Override
+	public Page<Invoice> getMonthlyStatusInvoices(String status, String date_range, int page, int size) {
+		
+        // Use a formatter with an explicit locale to convert MMMM yyyy into LocalDateTime
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
+        // Parse Month-Year into YearMonth
+        YearMonth yearMonth = YearMonth.parse(date_range, formatter);
+        // Convert to LocalDateTime
+        LocalDateTime startDateTime = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime endDateTime = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        System.out.println("Start DateTime: " + startDateTime);
+        System.out.println("End DateTime: " + endDateTime);
+		return invoiceRepository.findByStatusAndDateRange(status, startDateTime, endDateTime, PageRequest.of(page, size));
 	}
 
 }

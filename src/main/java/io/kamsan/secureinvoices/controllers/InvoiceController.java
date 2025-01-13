@@ -6,6 +6,10 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -23,9 +27,11 @@ import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Invoice;
+import io.kamsan.secureinvoices.form.invoice.MonthlyInvoiceStatusFilterRequest;
 import io.kamsan.secureinvoices.services.CustomerService;
 import io.kamsan.secureinvoices.services.InvoiceService;
 import io.kamsan.secureinvoices.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -124,5 +130,21 @@ public class InvoiceController {
 	private UserDTO getAuthenticatedUser (Authentication authentication) {
 		return ((CustomeUser) authentication.getPrincipal()).getUser();
 	}
-
+	
+	// Chart endpoint
+	
+	@PostMapping("/list/monthly-status")
+	public ResponseEntity<HttpResponse> getDataFiltered(@Valid @RequestBody MonthlyInvoiceStatusFilterRequest request, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("invoices", 
+						invoiceService.getMonthlyStatusInvoices(
+								request.getStatus(), request.getMonthYear(), page.orElse(0), size.orElse(5))))
+				.message("Invoice retrieved")
+				.status(OK)
+				.statusCode(OK.value())
+				.build());
+	}
 }
