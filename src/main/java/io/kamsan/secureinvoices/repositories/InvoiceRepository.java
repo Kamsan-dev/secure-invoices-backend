@@ -16,7 +16,7 @@ import io.kamsan.secureinvoices.entities.Invoice;
 public interface InvoiceRepository
 		extends PagingAndSortingRepository<Invoice, Long>, ListCrudRepository<Invoice, Long> {
 	
-	 @Query("SELECT i FROM Invoice i WHERE i.status = :status AND i.issuedAt BETWEEN :startDate AND :endDate")
+	 @Query("SELECT i FROM Invoice i WHERE i.status = :status AND i.issuedAt BETWEEN :startDate AND :endDate ORDER BY i.issuedAt DESC")
 	    Page<Invoice> findByStatusAndDateRange(@Param("status") String status, 
 	                                           @Param("startDate") LocalDateTime startDate, 
 	                                           @Param("endDate") LocalDateTime endDate, Pageable pageable);

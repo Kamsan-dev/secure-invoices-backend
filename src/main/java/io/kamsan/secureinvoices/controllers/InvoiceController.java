@@ -135,11 +135,13 @@ public class InvoiceController {
 	
 	@PostMapping("/list/monthly-status")
 	public ResponseEntity<HttpResponse> getDataFiltered(@Valid @RequestBody MonthlyInvoiceStatusFilterRequest request, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
-				.data(of("invoices", 
+				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), "page", 
 						invoiceService.getMonthlyStatusInvoices(
 								request.getStatus(), request.getMonthYear(), page.orElse(0), size.orElse(5))))
 				.message("Invoice retrieved")
