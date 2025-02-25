@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,8 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
 import io.kamsan.secureinvoices.dtos.UserDTO;
-import io.kamsan.secureinvoices.entities.Invoice;
+import io.kamsan.secureinvoices.entities.invoices.Invoice;
+import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
 import io.kamsan.secureinvoices.form.invoice.MonthlyInvoiceStatusFilterRequest;
+import io.kamsan.secureinvoices.repositories.InvoiceRepository;
 import io.kamsan.secureinvoices.services.CustomerService;
 import io.kamsan.secureinvoices.services.InvoiceService;
 import io.kamsan.secureinvoices.services.UserService;
@@ -111,17 +114,32 @@ public class InvoiceController {
 				.build());
 	}
 	
+	@PutMapping("/update/{id}")
+	public ResponseEntity<HttpResponse> updateInvoiceById(@PathVariable("id") Long id, @RequestBody Invoice invoice) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), "invoice", invoiceService.update(id, invoice)))
+				.message("Invoice has been updated and affected to " + customerService.getCustomer(id).getName())
+				.status(OK)
+				.statusCode(OK.value())
+				.build());
+	}
+	
 	@PostMapping("/add-to-customer/{id}")
 	public ResponseEntity<HttpResponse> addInvoiceToCustomer(@PathVariable("id") Long id, @RequestBody Invoice invoice) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
-		invoiceService.addInvoiceToCustomer(id, invoice);
+		invoiceService.update(id, invoice);
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail())))
-				.message("Invoice created and affected to " + customerService.getCustomer(id).getName())
+				.message("Invoice "+ invoiceService.getInvoice(id).getInvoiceNumber() + " has been updated.")
 				.status(OK)
 				.statusCode(OK.value())
 				.build());

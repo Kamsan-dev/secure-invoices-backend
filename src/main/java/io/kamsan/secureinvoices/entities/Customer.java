@@ -7,6 +7,7 @@ import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.kamsan.secureinvoices.entities.invoices.Invoice;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

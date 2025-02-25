@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 import org.springframework.data.domain.Page;
@@ -12,11 +13,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import io.kamsan.secureinvoices.entities.Customer;
-import io.kamsan.secureinvoices.entities.Invoice;
+import io.kamsan.secureinvoices.entities.invoices.Invoice;
+import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.repositories.CustomerRepository;
+import io.kamsan.secureinvoices.repositories.InvoiceLineRepository;
 import io.kamsan.secureinvoices.repositories.InvoiceRepository;
 import io.kamsan.secureinvoices.services.InvoiceService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +34,10 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 	private final InvoiceRepository invoiceRepository;
 	private final CustomerRepository customerRepository;
+	private final InvoiceLineRepository invoiceLineRepository;
+	
+	@PersistenceContext
+    private EntityManager entityManager;
 
 	@Override
 	public Invoice createInvoice(Invoice invoice) {
@@ -62,18 +71,75 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 	@Override
 	public Page<Invoice> getMonthlyStatusInvoices(String status, String date_range, int page, int size) {
-		
-        // Use a formatter with an explicit locale to convert MMMM yyyy into LocalDateTime
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
-        // Parse Month-Year into YearMonth
-        YearMonth yearMonth = YearMonth.parse(date_range, formatter);
-        // Convert to LocalDateTime
-        LocalDateTime startDateTime = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDateTime = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
-        System.out.println("Start DateTime: " + startDateTime);
-        System.out.println("End DateTime: " + endDateTime);
-		return invoiceRepository.findByStatusAndDateRange(status, startDateTime, endDateTime, PageRequest.of(page, size));
+		// Use a formatter with an explicit locale to convert MMMM yyyy into
+		// LocalDateTime
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
+		// Parse Month-Year into YearMonth
+		YearMonth yearMonth = YearMonth.parse(date_range, formatter);
+		// Convert to LocalDateTime
+		LocalDateTime startDateTime = yearMonth.atDay(1).atStartOfDay();
+		LocalDateTime endDateTime = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+		System.out.println("Start DateTime: " + startDateTime);
+		System.out.println("End DateTime: " + endDateTime);
+		return invoiceRepository.findByStatusAndDateRange(status, startDateTime, endDateTime,
+				PageRequest.of(page, size));
+	}
+
+	@Transactional
+	@Override
+	public Invoice update(Long invoiceId, Invoice invoice) {
+	    // Fetch the existing invoice with its lines to ensure the invoice lines are attached
+	    Invoice existingInvoice = invoiceRepository.findById(invoiceId).orElseThrow(() -> new ApiException("Invoice not found"));
+	    
+	    // Updating fields of existing invoice
+	    existingInvoice.setInvoiceNumber(invoice.getInvoiceNumber());
+	    existingInvoice.setServices(invoice.getServices());
+	    existingInvoice.setIssuedAt(invoice.getIssuedAt());
+	    existingInvoice.setStatus(invoice.getStatus());
+	    existingInvoice.setTotal(invoice.getTotal());
+	    existingInvoice.setIsVatEnabled(invoice.getIsVatEnabled());
+	    existingInvoice.setVatRate(invoice.getVatRate());
+	    
+	    List<InvoiceLine> existingLines = existingInvoice.getInvoiceLines();
+	    // delete invoice line if necessary.
+	    existingLines.removeIf(line -> !invoice.getInvoiceLines().contains(line));
+	    
+	    
+	    // Update the invoice lines or add a new ones.
+	    for (InvoiceLine updatedLine : invoice.getInvoiceLines()) {
+	          
+	        if (!existingLines.contains(updatedLine)) {
+	    		updatedLine.setInvoice(existingInvoice);
+	    		InvoiceLine mergedLine = entityManager.merge(updatedLine);
+	            existingLines.add(mergedLine);
+	            log.info("adding new invoice line");
+	    	} else {
+		        // Update the line attributes
+	    		InvoiceLine line = existingLines.stream()
+	    		        .filter(existingLine -> existingLine.getInvoiceLineId().equals(updatedLine.getInvoiceLineId()))
+	    		        .findFirst()
+	    		        .orElseThrow(() -> new ApiException("InvoiceLine not found"));
+	    		
+		        line.setDescription(updatedLine.getDescription());
+		        line.setType(updatedLine.getType());
+		        line.setDuration(updatedLine.getDuration());
+		        line.setPrice(updatedLine.getPrice());
+		        line.setQuantity(updatedLine.getQuantity());
+	            log.info("updating an existing invoice line");
+		        
+	    	}
+
+	    }
+
+	    // Flush the changes to the database to ensure the latest changes are applied
+	    entityManager.flush();
+	    // Ensure the total is recalculated
+	    existingInvoice.updateTotal();
+	    
+	    // Save the updated invoice with the attached invoice lines
+	    return invoiceRepository.save(existingInvoice);
 	}
 
 }

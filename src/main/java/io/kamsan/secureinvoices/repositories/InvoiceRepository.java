@@ -10,7 +10,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import io.kamsan.secureinvoices.entities.Invoice;
+import io.kamsan.secureinvoices.entities.invoices.Invoice;
 
 @Repository
 public interface InvoiceRepository
