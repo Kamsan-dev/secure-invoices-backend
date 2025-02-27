@@ -18,7 +18,7 @@ public class Constants {
 	public static final String CUSTOMER_MANAGEMENT_SERVICES = "CUSTOMER_MANAGEMENT_SERVICES";
 	public static final String AUTHORITIES = "authorities";
 	// 30 min expiration
-	public static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
+	public static final long ACCESS_TOKEN_EXPIRATION_TIME = 432_000_000; //1_800_000;
 	// 5 days expiration
 	public static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
 }

@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import io.kamsan.secureinvoices.dtomapper.InvoiceDTOMapper;
+import io.kamsan.secureinvoices.dtos.InvoiceDTO;
 import io.kamsan.secureinvoices.entities.Customer;
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
 import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
@@ -64,9 +66,9 @@ public class InvoiceServiceImpl implements InvoiceService {
 	}
 
 	@Override
-	public Invoice getInvoice(Long id) {
-		return invoiceRepository.findById(id)
-				.orElseThrow(() -> new ApiException("Invoice with id " + id + " has not been found"));
+	public InvoiceDTO getInvoice(Long id) {
+		return InvoiceDTOMapper.fromInvoice(invoiceRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Invoice with id " + id + " has not been found")));
 	}
 
 	@Override
@@ -89,7 +91,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 	@Transactional
 	@Override
-	public Invoice update(Long invoiceId, Invoice invoice) {
+	public InvoiceDTO update(Long invoiceId, InvoiceDTO invoice) {
 	    // Fetch the existing invoice with its lines to ensure the invoice lines are attached
 	    Invoice existingInvoice = invoiceRepository.findById(invoiceId).orElseThrow(() -> new ApiException("Invoice not found"));
 	    
@@ -99,6 +101,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    existingInvoice.setIssuedAt(invoice.getIssuedAt());
 	    existingInvoice.setStatus(invoice.getStatus());
 	    existingInvoice.setTotal(invoice.getTotal());
+	    existingInvoice.setTotalVat(invoice.getTotalVat());
 	    existingInvoice.setIsVatEnabled(invoice.getIsVatEnabled());
 	    existingInvoice.setVatRate(invoice.getVatRate());
 	    
@@ -132,14 +135,24 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    	}
 
 	    }
+	    
+	    // Check if the customerId is provided in the request body and update customer
+        if (invoice.getCustomerId() != null) {
+        	log.info("updating customer of this invoice");
+            Customer customer = customerRepository.findById(invoice.getCustomerId())
+                .orElseThrow(() -> new ApiException("Customer not found"));
 
+            existingInvoice.setCustomer(customer);
+        }
+
+	    log.info("Total VAT before saving: {}", invoice.getTotalVat());
 	    // Flush the changes to the database to ensure the latest changes are applied
 	    entityManager.flush();
 	    // Ensure the total is recalculated
 	    existingInvoice.updateTotal();
-	    
+	    log.info("Total VAT in invoice before saving: {}", existingInvoice.getTotalVat());
 	    // Save the updated invoice with the attached invoice lines
-	    return invoiceRepository.save(existingInvoice);
+	    return InvoiceDTOMapper.fromInvoice(invoiceRepository.save(existingInvoice));
 	}
 
 }

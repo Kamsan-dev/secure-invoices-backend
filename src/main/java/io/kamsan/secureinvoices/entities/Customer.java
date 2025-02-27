@@ -45,6 +45,6 @@ public class Customer {
 	@Column(name = "created_at") 
 	private LocalDateTime createdAt;
 
-	@OneToMany(mappedBy = "customer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private Collection<Invoice> invoices;
 }

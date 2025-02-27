@@ -3,9 +3,11 @@ package io.kamsan.secureinvoices.dtomapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+import io.kamsan.secureinvoices.dtos.InvoiceDTO;
 import io.kamsan.secureinvoices.dtos.UserDTO;
 import io.kamsan.secureinvoices.entities.Role;
 import io.kamsan.secureinvoices.entities.User;
+import io.kamsan.secureinvoices.entities.invoices.Invoice;
 
 public class UserDTOMapper {
 	
@@ -28,4 +30,5 @@ public class UserDTOMapper {
 		BeanUtils.copyProperties(userDTO, user);
 		return user;
 	}
+
 }

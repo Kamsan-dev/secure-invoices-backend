@@ -50,6 +50,8 @@ public class Invoice {
 	private LocalDateTime dueAt;
 	private String status;
 	private double total;
+	@Column(name = "total_vat") 
+	private Double totalVat = 0.00;
 	
 	
 	@Column(name = "is_vat_enabled")
@@ -69,10 +71,6 @@ public class Invoice {
 	
 	public void updateTotal() {
 		log.info("updating total price of the invoice");
-	    
-	    // Print each individual total price for debugging purposes
-	    invoiceLines.forEach(line -> log.info("Invoice Line Total: {}", line.getTotalPrice()));
-	    
 	    // Calculate and set the total price of the invoice
 	    this.total = invoiceLines.stream()
 	            .mapToDouble(InvoiceLine::getTotalPrice)
@@ -81,7 +79,9 @@ public class Invoice {
 	    // Log the final total after summing the prices
 	    log.info("Total invoice price before VAT : {}", this.total);
 	    if (this.isVatEnabled) {
-	    	this.total += ((this.total * this.vatRate) / 100);
+	    	this.totalVat = this.total + ((this.total * this.vatRate) / 100);
+	    } else {
+	    	this.totalVat = this.total;
 	    }
 	}
 }

@@ -6,10 +6,6 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.net.URI;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -26,11 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
+import io.kamsan.secureinvoices.dtos.InvoiceDTO;
 import io.kamsan.secureinvoices.dtos.UserDTO;
+import io.kamsan.secureinvoices.entities.Customer;
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
-import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
 import io.kamsan.secureinvoices.form.invoice.MonthlyInvoiceStatusFilterRequest;
-import io.kamsan.secureinvoices.repositories.InvoiceRepository;
 import io.kamsan.secureinvoices.services.CustomerService;
 import io.kamsan.secureinvoices.services.InvoiceService;
 import io.kamsan.secureinvoices.services.UserService;
@@ -100,14 +96,15 @@ public class InvoiceController {
 	@GetMapping("/get/{id}")
 	public ResponseEntity<HttpResponse> getInvoice(@PathVariable("id") Long id) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		Invoice invoice = invoiceService.getInvoice(id);
+		InvoiceDTO invoice = invoiceService.getInvoice(id);
 		UserDTO userDTO = getAuthenticatedUser(authentication);
+		Customer customer = customerService.getCustomer(invoice.getCustomerId());
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"invoice", invoice, "customer", invoice.getCustomer()))
+						"invoice", invoice, "customer", customer))
 				.message("Invoice retrieved")
 				.status(OK)
 				.statusCode(OK.value())
@@ -115,7 +112,7 @@ public class InvoiceController {
 	}
 	
 	@PutMapping("/update/{id}")
-	public ResponseEntity<HttpResponse> updateInvoiceById(@PathVariable("id") Long id, @RequestBody Invoice invoice) {
+	public ResponseEntity<HttpResponse> updateInvoiceById(@PathVariable("id") Long id, @RequestBody InvoiceDTO invoice) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity
@@ -129,21 +126,21 @@ public class InvoiceController {
 				.build());
 	}
 	
-	@PostMapping("/add-to-customer/{id}")
-	public ResponseEntity<HttpResponse> addInvoiceToCustomer(@PathVariable("id") Long id, @RequestBody Invoice invoice) {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		UserDTO userDTO = getAuthenticatedUser(authentication);
-		invoiceService.update(id, invoice);
-		return ResponseEntity
-				.ok()
-				.body(HttpResponse.builder()
-				.timeStamp(now().toString())
-				.data(of("user", userService.getUserByEmail(userDTO.getEmail())))
-				.message("Invoice "+ invoiceService.getInvoice(id).getInvoiceNumber() + " has been updated.")
-				.status(OK)
-				.statusCode(OK.value())
-				.build());
-	}
+//	@PostMapping("/add-to-customer/{id}")
+//	public ResponseEntity<HttpResponse> addInvoiceToCustomer(@PathVariable("id") Long id, @RequestBody Invoice invoice) {
+//		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//		UserDTO userDTO = getAuthenticatedUser(authentication);
+//		invoiceService.update(id, invoice);
+//		return ResponseEntity
+//				.ok()
+//				.body(HttpResponse.builder()
+//				.timeStamp(now().toString())
+//				.data(of("user", userService.getUserByEmail(userDTO.getEmail())))
+//				.message("Invoice "+ invoiceService.getInvoice(id).getInvoiceNumber() + " has been updated.")
+//				.status(OK)
+//				.statusCode(OK.value())
+//				.build());
+//	}
 	
 	private UserDTO getAuthenticatedUser (Authentication authentication) {
 		return ((CustomeUser) authentication.getPrincipal()).getUser();
