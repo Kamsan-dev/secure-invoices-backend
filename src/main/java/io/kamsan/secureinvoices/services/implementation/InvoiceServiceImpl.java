@@ -155,4 +155,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    return InvoiceDTOMapper.fromInvoice(invoiceRepository.save(existingInvoice));
 	}
 
+	@Override
+	public void deleteInvoiceById(Long id) {
+	    if (!invoiceRepository.existsById(id)) {
+	        throw new ApiException("Invoice with id " + id + "not found");
+	    }
+	    invoiceRepository.deleteById(id);
+	}
 }

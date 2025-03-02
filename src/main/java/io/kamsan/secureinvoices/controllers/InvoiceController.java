@@ -4,6 +4,7 @@ import static java.time.LocalDateTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.net.URI;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -123,6 +125,19 @@ public class InvoiceController {
 				.message("Invoice has been updated and affected to " + customerService.getCustomer(id).getName())
 				.status(OK)
 				.statusCode(OK.value())
+				.build());
+	}
+	
+	@DeleteMapping("/delete/{id}")
+	public ResponseEntity<HttpResponse> updateInvoiceById(@PathVariable("id") Long id) {
+		invoiceService.deleteInvoiceById(id);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.message("Invoice has been deleted")
+				.status(NO_CONTENT)
+				.statusCode(NO_CONTENT.value())
 				.build());
 	}
 	
