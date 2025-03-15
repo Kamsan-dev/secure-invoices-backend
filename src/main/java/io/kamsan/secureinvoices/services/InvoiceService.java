@@ -7,7 +7,7 @@ import io.kamsan.secureinvoices.entities.invoices.Invoice;
 
 public interface InvoiceService {
 	// Invoice functions
-	Invoice createInvoice(Invoice invoice);
+	Invoice createInvoice(String description);
 	Page<Invoice> getInvoices(int page, int size);
 	Page<Invoice> getMonthlyStatusInvoices(String status, String date_range, int page, int size);
 	void addInvoiceToCustomer(Long id, Invoice invoice);

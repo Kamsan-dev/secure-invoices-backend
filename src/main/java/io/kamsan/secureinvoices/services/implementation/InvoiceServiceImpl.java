@@ -7,9 +7,11 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import io.kamsan.secureinvoices.dtomapper.InvoiceDTOMapper;
@@ -17,6 +19,7 @@ import io.kamsan.secureinvoices.dtos.InvoiceDTO;
 import io.kamsan.secureinvoices.entities.Customer;
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
 import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
+import io.kamsan.secureinvoices.enums.InvoiceStatusEnum;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.repositories.CustomerRepository;
 import io.kamsan.secureinvoices.repositories.InvoiceLineRepository;
@@ -42,15 +45,21 @@ public class InvoiceServiceImpl implements InvoiceService {
     private EntityManager entityManager;
 
 	@Override
-	public Invoice createInvoice(Invoice invoice) {
-		invoice.setIssuedAt(LocalDateTime.now());
-		invoice.setInvoiceNumber(randomAlphanumeric(8).toUpperCase());
-		return invoiceRepository.save(invoice);
+	public Invoice createInvoice(String description) {
+		Invoice newInvoice = new Invoice();
+		newInvoice.setIssuedAt(LocalDateTime.now());
+		newInvoice.setDueAt(LocalDateTime.now());
+		newInvoice.setServices(description);
+		newInvoice.setInvoiceNumber(randomAlphanumeric(8).toUpperCase());
+		newInvoice.setTotal(0.00);
+		newInvoice.setStatus(InvoiceStatusEnum.DRAFT);
+		newInvoice.setIsVatEnabled(true);
+		return invoiceRepository.save(newInvoice);
 	}
 
 	@Override
 	public Page<Invoice> getInvoices(int page, int size) {
-		return invoiceRepository.findAll(PageRequest.of(page, size));
+		return invoiceRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Order.desc("issuedAt"))));
 	}
 
 	@Transactional
@@ -60,13 +69,14 @@ public class InvoiceServiceImpl implements InvoiceService {
 		Customer customer = customerRepository.findById(customerId)
 				.orElseThrow(() -> new ApiException("Customer with id " + customerId + " has not been found"));
 		// Set the customer on the invoice (owning side)
-		invoice.setCustomer(customer);
+		//invoice.setCustomer(customer);
 		invoiceRepository.save(invoice);
 
 	}
 
 	@Override
 	public InvoiceDTO getInvoice(Long id) {
+		log.info("Retrieving invoice data");
 		return InvoiceDTOMapper.fromInvoice(invoiceRepository.findById(id)
 				.orElseThrow(() -> new ApiException("Invoice with id " + id + " has not been found")));
 	}
@@ -85,7 +95,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 		System.out.println("Start DateTime: " + startDateTime);
 		System.out.println("End DateTime: " + endDateTime);
-		return invoiceRepository.findByStatusAndDateRange(status, startDateTime, endDateTime,
+		return invoiceRepository.findByStatusAndDateRange(InvoiceStatusEnum.valueOf(status.toUpperCase()), startDateTime, endDateTime,
 				PageRequest.of(page, size));
 	}
 
@@ -96,9 +106,9 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    Invoice existingInvoice = invoiceRepository.findById(invoiceId).orElseThrow(() -> new ApiException("Invoice not found"));
 	    
 	    // Updating fields of existing invoice
-	    existingInvoice.setInvoiceNumber(invoice.getInvoiceNumber());
 	    existingInvoice.setServices(invoice.getServices());
 	    existingInvoice.setIssuedAt(invoice.getIssuedAt());
+	    existingInvoice.setDueAt(invoice.getDueAt());
 	    existingInvoice.setStatus(invoice.getStatus());
 	    existingInvoice.setTotal(invoice.getTotal());
 	    existingInvoice.setTotalVat(invoice.getTotalVat());

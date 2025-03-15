@@ -46,24 +46,24 @@ public class InvoiceController {
 	private final InvoiceService invoiceService;
 	private final UserService userService;
 	
-	@GetMapping("/new")
-	public ResponseEntity<HttpResponse> newInvoice() {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		UserDTO userDTO = getAuthenticatedUser(authentication);
-		return ResponseEntity
-				.ok()
-				.body(HttpResponse.builder()
-				.timeStamp(now().toString())
-				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"customers", customerService.getCustomers()))
-				.message("Invoice created")
-				.status(OK)
-				.statusCode(OK.value())
-				.build());
-	}
+//	@GetMapping("/new")
+//	public ResponseEntity<HttpResponse> newInvoice() {
+//		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//		UserDTO userDTO = getAuthenticatedUser(authentication);
+//		return ResponseEntity
+//				.ok()
+//				.body(HttpResponse.builder()
+//				.timeStamp(now().toString())
+//				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
+//						"customers", customerService.getCustomers()))
+//				.message("Invoice created")
+//				.status(OK)
+//				.statusCode(OK.value())
+//				.build());
+//	}
 	
 	@PostMapping("/create")
-	public ResponseEntity<HttpResponse> createInvoice(@RequestBody Invoice invoice) {
+	public ResponseEntity<HttpResponse> createInvoice(@RequestBody String description) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity
@@ -71,7 +71,7 @@ public class InvoiceController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"invoice", invoiceService.createInvoice(invoice)))
+						"invoice", invoiceService.createInvoice(description)))
 				.message("Invoice created")
 				.status(CREATED)
 				.statusCode(CREATED.value())
@@ -100,7 +100,10 @@ public class InvoiceController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		InvoiceDTO invoice = invoiceService.getInvoice(id);
 		UserDTO userDTO = getAuthenticatedUser(authentication);
-		Customer customer = customerService.getCustomer(invoice.getCustomerId());
+		Customer customer = new Customer();
+		if (invoice.getCustomerId() != null) {
+			customer = customerService.getCustomer(invoice.getCustomerId());
+		}
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()

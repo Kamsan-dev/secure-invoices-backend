@@ -13,8 +13,16 @@ public class MonthlyInvoiceStatisticRowMapper implements RowMapper<MonthlyInvoic
 	public MonthlyInvoiceStatistic mapRow(ResultSet rs, int rowNum) throws SQLException {
 		MonthlyInvoiceStatistic statistic = new MonthlyInvoiceStatistic();
 		statistic.setMonth(rs.getString("month"));
-		statistic.setStatus(rs.getString("status"));
+		statistic.setStatus(capitalizeFirstLetter(rs.getString("status")));
 		statistic.setInvoiceCount(rs.getInt("invoice_count"));
 		return statistic;
 	}
+	
+	public String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return input; // Return the same string if null or empty
+        }
+        
+        return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
+    }
 }

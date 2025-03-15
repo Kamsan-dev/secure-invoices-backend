@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
+import io.kamsan.secureinvoices.enums.InvoiceStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +21,7 @@ public class InvoiceDTO {
 	private String services;
 	private LocalDateTime issuedAt;
 	private LocalDateTime dueAt;
-	private String status;
+	private InvoiceStatusEnum status;
 	private double total;
 	private Double totalVat;
 	private Boolean isVatEnabled;

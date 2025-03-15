@@ -9,7 +9,9 @@ public class InvoiceDTOMapper {
 	public static InvoiceDTO fromInvoice(Invoice invoice) {
 		InvoiceDTO invoiceDTO = new InvoiceDTO();
 		BeanUtils.copyProperties(invoice, invoiceDTO);
-		invoiceDTO.setCustomerId(invoice.getCustomer().getCustomerId());
+		if (invoice.getCustomer() != null) {
+			invoiceDTO.setCustomerId(invoice.getCustomer().getCustomerId());
+		}
 		return invoiceDTO;
 	}
 }
