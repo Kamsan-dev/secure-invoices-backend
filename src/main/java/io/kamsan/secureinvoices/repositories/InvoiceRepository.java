@@ -23,5 +23,6 @@ public interface InvoiceRepository
 	                                           @Param("endDate") LocalDateTime endDate, Pageable pageable);
 	 
 	 
+	 Page<Invoice> findByCustomer_CustomerId(Long customerId, Pageable pageable);
 	 
 }

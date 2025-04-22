@@ -78,7 +78,7 @@ public class CustomerController {
 	}
 	
 	@GetMapping("/search")
-	public ResponseEntity<HttpResponse> searchCustomers(@RequestParam Optional<String> keyword, 
+	public ResponseEntity<HttpResponse> searchCustomers(@RequestParam Optional<String> name, @RequestParam Optional<String> type, @RequestParam Optional<String> status,
 			@RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
@@ -87,7 +87,7 @@ public class CustomerController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"page", customerService.searchCustomers(keyword.orElse(""), 
+						"page", customerService.searchCustomers(name.orElse(""), type.orElse("ALL"), status.orElse("ALL"), 
 								page.orElse(0), size.orElse(10))))
 				.message("Custome retrieved")
 				.status(OK)

@@ -9,7 +9,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import io.kamsan.secureinvoices.domain.Statistic;
+import io.kamsan.secureinvoices.dtomapper.CustomerDTOMapper;
+import io.kamsan.secureinvoices.dtos.customers.CustomerDTO;
 import io.kamsan.secureinvoices.entities.Customer;
+import io.kamsan.secureinvoices.enums.customers.CustomerStatusEnum;
+import io.kamsan.secureinvoices.enums.customers.CustomerTypeEnum;
 import io.kamsan.secureinvoices.exceptions.ApiException;
 import io.kamsan.secureinvoices.query.StatisticQuery;
 import io.kamsan.secureinvoices.repositories.CustomerRepository;
@@ -44,8 +48,8 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public Page<Customer> getCustomers(int page, int size) {
-		return customerRepository.findAll(PageRequest.of(page, size));
+	public Page<CustomerDTO> getCustomers(int page, int size) {
+		return customerRepository.findAll(PageRequest.of(page, size)).map(CustomerDTOMapper::fromCustomer);
 	}
 
 	@Override
@@ -60,8 +64,13 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public Page<Customer> searchCustomers(String keyword, int page, int size) {
-		return customerRepository.findByNameContaining(keyword, PageRequest.of(page, size));
+	public Page<CustomerDTO> searchCustomers(String name, String type, String status, int page, int size) {
+		//return customerRepository.findByNameContaining(keyword, PageRequest.of(page, size));
+	    CustomerTypeEnum typeEnum = "ALL".equalsIgnoreCase(type) ? null : CustomerTypeEnum.valueOf(type.toUpperCase());
+	    CustomerStatusEnum statusEnum = "ALL".equalsIgnoreCase(status) ? null : CustomerStatusEnum.valueOf(status.toUpperCase());
+		Page<Customer> pageCustomer =  customerRepository.filterCustomers(name, typeEnum, statusEnum, PageRequest.of(page, size));
+		
+		return pageCustomer.map(CustomerDTOMapper::fromCustomer);
 	}
 
 	@Override

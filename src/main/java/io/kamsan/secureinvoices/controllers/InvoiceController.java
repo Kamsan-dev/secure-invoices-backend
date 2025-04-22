@@ -116,6 +116,22 @@ public class InvoiceController {
 				.build());
 	}
 	
+	@GetMapping("/get/customer/{customerId}")
+	public ResponseEntity<HttpResponse> getInvoicesByCustomer(@PathVariable("customerId") Long id, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDTO userDTO = getAuthenticatedUser(authentication);
+		return ResponseEntity
+				.ok()
+				.body(HttpResponse.builder()
+				.timeStamp(now().toString())
+				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
+						"invoices", invoiceService.getInvoicesByCustomerId(id, page.orElse(0), size.orElse(5))))
+				.message("Invoice retrieved")
+				.status(OK)
+				.statusCode(OK.value())
+				.build());
+	}
+	
 	@PutMapping("/update/{id}")
 	public ResponseEntity<HttpResponse> updateInvoiceById(@PathVariable("id") Long id, @RequestBody InvoiceDTO invoice) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

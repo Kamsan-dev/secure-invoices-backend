@@ -8,9 +8,13 @@ import java.util.Collection;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
+import io.kamsan.secureinvoices.enums.customers.CustomerStatusEnum;
+import io.kamsan.secureinvoices.enums.customers.CustomerTypeEnum;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,8 +40,10 @@ public class Customer {
 	private Long customerId;
 	private String name;
 	private String email;
-	private String type;
-	private String status;
+	@Enumerated(EnumType.STRING)
+	private CustomerTypeEnum type;
+	@Enumerated(EnumType.STRING)
+	private CustomerStatusEnum status;
 	private String address;
 	private String phone;
 	@Column(name = "image_url") 

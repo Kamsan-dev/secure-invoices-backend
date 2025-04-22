@@ -39,7 +39,6 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 	private final InvoiceRepository invoiceRepository;
 	private final CustomerRepository customerRepository;
-	private final InvoiceLineRepository invoiceLineRepository;
 	
 	@PersistenceContext
     private EntityManager entityManager;
@@ -171,5 +170,10 @@ public class InvoiceServiceImpl implements InvoiceService {
 	        throw new ApiException("Invoice with id " + id + "not found");
 	    }
 	    invoiceRepository.deleteById(id);
+	}
+
+	@Override
+	public Page<InvoiceDTO> getInvoicesByCustomerId(Long customerId, int page, int size) {
+		return  invoiceRepository.findByCustomer_CustomerId(customerId, PageRequest.of(page, size)).map(InvoiceDTOMapper::fromInvoice);
 	}
 }
