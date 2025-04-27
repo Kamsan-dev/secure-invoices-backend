@@ -21,7 +21,7 @@ public class InvoiceDTO {
 	private String services;
 	private LocalDateTime issuedAt;
 	private LocalDateTime dueAt;
-	private InvoiceStatusEnum status;
+	private String status;
 	private double total;
 	private Double totalVat;
 	private Boolean isVatEnabled;

@@ -57,8 +57,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 	}
 
 	@Override
-	public Page<Invoice> getInvoices(int page, int size) {
-		return invoiceRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Order.desc("issuedAt"))));
+	public Page<InvoiceDTO> getInvoices(int page, int size) {
+		return invoiceRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Order.desc("issuedAt")))).map(InvoiceDTOMapper::fromInvoice);
 	}
 
 	@Transactional
@@ -81,7 +81,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 	}
 
 	@Override
-	public Page<Invoice> getMonthlyStatusInvoices(String status, String date_range, int page, int size) {
+	public Page<InvoiceDTO> getMonthlyStatusInvoices(String status, String date_range, int page, int size) {
 
 		// Use a formatter with an explicit locale to convert MMMM yyyy into
 		// LocalDateTime
@@ -95,7 +95,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 		System.out.println("Start DateTime: " + startDateTime);
 		System.out.println("End DateTime: " + endDateTime);
 		return invoiceRepository.findByStatusAndDateRange(InvoiceStatusEnum.valueOf(status.toUpperCase()), startDateTime, endDateTime,
-				PageRequest.of(page, size));
+				PageRequest.of(page, size)).map(InvoiceDTOMapper::fromInvoice);
 	}
 
 	@Transactional
@@ -108,7 +108,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    existingInvoice.setServices(invoice.getServices());
 	    existingInvoice.setIssuedAt(invoice.getIssuedAt());
 	    existingInvoice.setDueAt(invoice.getDueAt());
-	    existingInvoice.setStatus(invoice.getStatus());
+	    existingInvoice.setStatus(InvoiceStatusEnum.valueOf(invoice.getStatus()));
 	    existingInvoice.setTotal(invoice.getTotal());
 	    existingInvoice.setTotalVat(invoice.getTotalVat());
 	    existingInvoice.setIsVatEnabled(invoice.getIsVatEnabled());

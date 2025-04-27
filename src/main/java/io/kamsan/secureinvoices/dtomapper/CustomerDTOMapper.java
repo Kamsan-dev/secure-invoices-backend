@@ -10,6 +10,8 @@ public class CustomerDTOMapper {
 	public static CustomerDTO fromCustomer(Customer customer) {
 		CustomerDTO customerDTO = new CustomerDTO();
 		BeanUtils.copyProperties(customer, customerDTO);
+		customerDTO.setStatus(customer.getStatus().getLabel());
+		customerDTO.setType(customer.getType().getLabel());
 		return customerDTO;
 	}
 }

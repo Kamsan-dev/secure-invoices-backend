@@ -19,8 +19,8 @@ public class CustomerDTO {
 	private Long customerId;
 	private String name;
 	private String email;
-	private CustomerTypeEnum type;
-	private CustomerStatusEnum status;
+	private String type;
+	private String status;
 	private String address;
 	private String phone;
 	private String imageUrl;
