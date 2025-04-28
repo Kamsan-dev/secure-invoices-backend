@@ -26,8 +26,7 @@ import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
 import io.kamsan.secureinvoices.dtos.InvoiceDTO;
 import io.kamsan.secureinvoices.dtos.UserDTO;
-import io.kamsan.secureinvoices.entities.Customer;
-import io.kamsan.secureinvoices.entities.invoices.Invoice;
+import io.kamsan.secureinvoices.dtos.customers.CustomerDTO;
 import io.kamsan.secureinvoices.form.invoice.MonthlyInvoiceStatusFilterRequest;
 import io.kamsan.secureinvoices.services.CustomerService;
 import io.kamsan.secureinvoices.services.InvoiceService;
@@ -100,16 +99,16 @@ public class InvoiceController {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		InvoiceDTO invoice = invoiceService.getInvoice(id);
 		UserDTO userDTO = getAuthenticatedUser(authentication);
-		Customer customer = new Customer();
+		CustomerDTO customerDTO = new CustomerDTO();
 		if (invoice.getCustomerId() != null) {
-			customer = customerService.getCustomer(invoice.getCustomerId());
+			customerDTO = customerService.getCustomer(invoice.getCustomerId());
 		}
 		return ResponseEntity
 				.ok()
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"invoice", invoice, "customer", customer))
+						"invoice", invoice, "customer", customerDTO))
 				.message("Invoice retrieved")
 				.status(OK)
 				.statusCode(OK.value())
@@ -125,7 +124,7 @@ public class InvoiceController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"invoices", invoiceService.getInvoicesByCustomerId(id, page.orElse(0), size.orElse(5))))
+						"page", invoiceService.getInvoicesByCustomerId(id, page.orElse(0), size.orElse(5))))
 				.message("Invoice retrieved")
 				.status(OK)
 				.statusCode(OK.value())

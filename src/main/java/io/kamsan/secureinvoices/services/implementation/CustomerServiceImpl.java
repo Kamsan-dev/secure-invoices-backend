@@ -33,18 +33,23 @@ public class CustomerServiceImpl implements CustomerService {
 	private final NamedParameterJdbcTemplate jdbc;
 
 	@Override
-	public Customer createCustomer(Customer customer) {
-		customer.setCreatedAt(LocalDateTime.now());
-		log.info("Customer created");
-		return customerRepository.save(customer);
+	public CustomerDTO createCustomer(CustomerDTO customerDTO) {
+	    Customer customer = CustomerDTOMapper.fromCustomerDTO(customerDTO);
+	    customer.setCreatedAt(LocalDateTime.now());
+
+	    Customer savedCustomer = customerRepository.save(customer);
+	    log.info("Customer created with ID: {}", savedCustomer.getCustomerId());
+
+	    return CustomerDTOMapper.fromCustomer(savedCustomer);
 	}
+
 
 	@Transactional
 	@Override
-	public Customer updateCustomer(Customer customer) {
-		customerRepository.save(customer);
-		log.info("customer id {}", customer.getCustomerId());
-		return this.getCustomer(customer.getCustomerId());
+	public CustomerDTO updateCustomer(CustomerDTO customerDTO) {
+		customerRepository.save(CustomerDTOMapper.fromCustomerDTO(customerDTO));
+		log.info("Updated data of customer id {}", customerDTO.getCustomerId());
+		return getCustomer(customerDTO.getCustomerId());
 	}
 
 	@Override
@@ -58,9 +63,9 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public Customer getCustomer(long id) {
-		return customerRepository.findById(id)
-				.orElseThrow(() -> new ApiException("Customer with id " + id + " has not been found"));
+	public CustomerDTO getCustomer(long id) {
+		return CustomerDTOMapper.fromCustomer(customerRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Customer with id " + id + " has not been found")));
 	}
 
 	@Override

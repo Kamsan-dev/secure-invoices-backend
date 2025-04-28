@@ -8,11 +8,11 @@ import io.kamsan.secureinvoices.entities.Customer;
 
 public interface CustomerService { 
 	// Customer functions
-	Customer createCustomer(Customer customer);
-	Customer updateCustomer(Customer customer);
+	CustomerDTO createCustomer(CustomerDTO customerDTO);
+	CustomerDTO updateCustomer(CustomerDTO customerDTO);
 	Page<CustomerDTO> getCustomers(int page, int size);
 	Iterable<Customer> getCustomers();
-	Customer getCustomer(long id);
+	CustomerDTO getCustomer(long id);
 	Page<CustomerDTO> searchCustomers(String name, String type, String status, int page, int size);
 	Statistic getStats();
 

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.kamsan.secureinvoices.domain.CustomeUser;
 import io.kamsan.secureinvoices.domain.HttpResponse;
 import io.kamsan.secureinvoices.dtos.UserDTO;
+import io.kamsan.secureinvoices.dtos.customers.CustomerDTO;
 import io.kamsan.secureinvoices.entities.Customer;
 import io.kamsan.secureinvoices.report.CustomerReport;
 import io.kamsan.secureinvoices.services.CustomerService;
@@ -96,7 +97,7 @@ public class CustomerController {
 	}
 	
 	@PutMapping("/update")
-	public ResponseEntity<HttpResponse> updateCustomer(@RequestBody Customer customer) {
+	public ResponseEntity<HttpResponse> updateCustomer(@RequestBody CustomerDTO customerDTO) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity
@@ -104,7 +105,7 @@ public class CustomerController {
 				.body(HttpResponse.builder()
 				.timeStamp(now().toString())
 				.data(of("user", userService.getUserByEmail(userDTO.getEmail()), 
-						"customer", customerService.updateCustomer(customer)))
+						"customer", customerService.updateCustomer(customerDTO)))
 				.message("Customer updated")
 				.status(OK)
 				.statusCode(OK.value())
@@ -113,7 +114,7 @@ public class CustomerController {
 	
 	
 	@PostMapping("/create")
-	public ResponseEntity<HttpResponse> createCustomer(@RequestBody Customer customer) {
+	public ResponseEntity<HttpResponse> createCustomer(@RequestBody CustomerDTO customer) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDTO userDTO = getAuthenticatedUser(authentication);
 		return ResponseEntity

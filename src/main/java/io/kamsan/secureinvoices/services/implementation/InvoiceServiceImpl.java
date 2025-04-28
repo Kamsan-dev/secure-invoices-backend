@@ -92,8 +92,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 		LocalDateTime startDateTime = yearMonth.atDay(1).atStartOfDay();
 		LocalDateTime endDateTime = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
-		System.out.println("Start DateTime: " + startDateTime);
-		System.out.println("End DateTime: " + endDateTime);
+//		System.out.println("Start DateTime: " + startDateTime);
+//		System.out.println("End DateTime: " + endDateTime);
 		return invoiceRepository.findByStatusAndDateRange(InvoiceStatusEnum.valueOf(status.toUpperCase()), startDateTime, endDateTime,
 				PageRequest.of(page, size)).map(InvoiceDTOMapper::fromInvoice);
 	}
