@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import io.kamsan.secureinvoices.dtomapper.InvoiceDTOMapper;
 import io.kamsan.secureinvoices.dtos.InvoiceDTO;
+import io.kamsan.secureinvoices.dtos.stats.InvoiceStatusCountDTO;
 import io.kamsan.secureinvoices.entities.Customer;
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
 import io.kamsan.secureinvoices.entities.invoices.InvoiceLine;
@@ -176,4 +177,6 @@ public class InvoiceServiceImpl implements InvoiceService {
 	public Page<InvoiceDTO> getInvoicesByCustomerId(Long customerId, int page, int size) {
 		return  invoiceRepository.findByCustomer_CustomerId(customerId, PageRequest.of(page, size)).map(InvoiceDTOMapper::fromInvoice);
 	}
+
+
 }

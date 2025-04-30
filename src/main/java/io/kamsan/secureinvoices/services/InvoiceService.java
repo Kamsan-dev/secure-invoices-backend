@@ -1,8 +1,11 @@
 package io.kamsan.secureinvoices.services;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 
 import io.kamsan.secureinvoices.dtos.InvoiceDTO;
+import io.kamsan.secureinvoices.dtos.stats.InvoiceStatusCountDTO;
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
 
 public interface InvoiceService {

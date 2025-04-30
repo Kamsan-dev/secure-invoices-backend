@@ -4,7 +4,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import io.kamsan.secureinvoices.domain.MonthlyInvoiceStatistic;
+import io.kamsan.secureinvoices.dtos.stats.InvoiceStatusCountDTO;
 import io.kamsan.secureinvoices.exceptions.ApiException;
+import io.kamsan.secureinvoices.repositories.InvoiceRepository;
 import io.kamsan.secureinvoices.rowmapper.MonthlyInvoiceStatisticRowMapper;
 import io.kamsan.secureinvoices.services.StatisticService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StatisticServiceImpl implements StatisticService {
 	private final NamedParameterJdbcTemplate jdbc;
+	private final InvoiceRepository invoiceRepository;
 
 	@Override
 	public List<MonthlyInvoiceStatistic> getMounthlyInvoiceStatistic() {
@@ -28,5 +31,10 @@ public class StatisticServiceImpl implements StatisticService {
 			log.error(ex.getMessage());
 			throw new ApiException("An error occured when retrieving mountly statistics invoices");
 		}
+	}
+	
+	@Override
+	public List<InvoiceStatusCountDTO> getInvoicesByStatus() {
+		return invoiceRepository.findInvoicesByStatus();
 	}
 }

@@ -1,6 +1,7 @@
 package io.kamsan.secureinvoices.repositories;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import io.kamsan.secureinvoices.dtos.stats.InvoiceStatusCountDTO;
 import io.kamsan.secureinvoices.entities.invoices.Invoice;
 import io.kamsan.secureinvoices.enums.InvoiceStatusEnum;
 
@@ -24,5 +26,8 @@ public interface InvoiceRepository
 	 
 	 
 	 Page<Invoice> findByCustomer_CustomerId(Long customerId, Pageable pageable);
+	 
+	 @Query("SELECT new io.kamsan.secureinvoices.dtos.stats.InvoiceStatusCountDTO(i.status AS status, COUNT(i)) AS total FROM Invoice i GROUP BY i.status")
+	 List<InvoiceStatusCountDTO> findInvoicesByStatus();
 	 
 }

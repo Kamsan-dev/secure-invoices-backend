@@ -29,5 +29,13 @@ public class StatisticController {
 						.data(of("stats", statisticService.getMounthlyInvoiceStatistic())).message("Profile retrieved")
 						.status(HttpStatus.OK).statusCode(HttpStatus.OK.value()).build());
 	}
+	
+	@GetMapping("/invoices/status-distribution")
+	public ResponseEntity<HttpResponse> getInvoicesStatusDistribution() {
+		return ResponseEntity.ok()
+				.body(HttpResponse.builder().timeStamp(now().toString())
+						.data(of("stats", statisticService.getInvoicesByStatus())).message("Profile retrieved")
+						.status(HttpStatus.OK).statusCode(HttpStatus.OK.value()).build());
+	}
 
 }
